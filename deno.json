@@ -1,0 +1,12 @@
+{
+  "tasks": {
+    "dev": "deno run --watch src/main.ts",
+    "build": "deno run -A src/main.ts",
+    "build:pdf": "deno run -A src/main.ts --pdf"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/path": "jsr:@std/path@^1.1.4",
+    "playwright": "npm:playwright@^1.58.2"
+  }
+}
