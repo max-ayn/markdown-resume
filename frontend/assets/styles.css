@@ -1,0 +1,154 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --border: #d7dde3;
+  --ink: #17212b;
+  --muted: #5f6d79;
+  --tab: #eff2f5;
+  --tab-active: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at top right, #e9eef4 0%, var(--bg) 45%);
+}
+
+.app-shell {
+  height: 100vh;
+  padding: 0.75rem;
+}
+
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
+  gap: 0.75rem;
+  height: 100%;
+}
+
+.editor-pane,
+.preview-pane {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.editor-pane {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.editor-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--tab);
+}
+
+.editor-tab {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.45rem 0.8rem;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-tab.active {
+  border-color: var(--border);
+  background: var(--tab-active);
+  color: var(--ink);
+}
+
+.code-editor {
+  min-height: 0;
+  height: 100%;
+}
+
+.code-editor .cm-editor,
+.code-editor .cm-scroller {
+  height: 100%;
+}
+
+.code-editor .cm-editor {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 14px;
+}
+
+.preview-pane {
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.download-button {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: #2f4058;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.download-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.preview-frame {
+  border: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+}
+
+.preview-error {
+  margin: 0;
+  padding: 1rem;
+  color: #9d1c1c;
+  background: #fff0f0;
+  white-space: pre-wrap;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .editor-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 60vh 60vh;
+  }
+}

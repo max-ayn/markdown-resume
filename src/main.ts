@@ -3,8 +3,8 @@ import { MarkdownHtmlGenerator } from "./generate_html.ts";
 import { HtmlToPdfGenerator } from "./generate_pdf.ts";
 
 const ROOT = dirname(dirname(fromFileUrl(import.meta.url)));
-const inputMarkdown = join(ROOT, "resume.md");
-const inputCss = join(ROOT, "styles.css");
+const inputMarkdown = join(ROOT, "resume", "resume.md");
+const inputCss = join(ROOT, "resume", "styles.css");
 const outputHtml = join(ROOT, "out", "resume.html");
 const outputPdf = join(ROOT, "out", "resume.pdf");
 
