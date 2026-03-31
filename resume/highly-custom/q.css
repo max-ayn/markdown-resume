@@ -1,0 +1,418 @@
+:root {
+  --accent: #d9c313;
+  --paper: #f3f3f1;
+  --ink: #111111;
+  --muted: #4b4b4b;
+  --line: #d6d1a8;
+  --soft: #ececea;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #dcdcdc;
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 4mm auto;
+  background: var(--paper);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 12%);
+}
+
+/* Base layout */
+.resume {
+  display: block;
+}
+
+.resume-section {
+  padding: 0 16mm;
+}
+
+.resume-section__title {
+  margin: 0 0 5mm;
+  font-size: 8.5mm;
+  line-height: 1;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+}
+
+.resume-section--who-am-i,
+.resume-section--expert-in {
+  padding-top: 10mm;
+}
+
+.resume-section--education,
+.resume-section--experience {
+  padding-top: 8mm;
+}
+
+.resume-section--what-i-do,
+.resume-section--interests {
+  padding-top: 10mm;
+}
+
+/* HERO */
+.resume-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.95fr 1.1fr;
+  align-items: end;
+  min-height: 95mm;
+  background: var(--accent);
+  padding: 12mm 14mm 8mm;
+  overflow: hidden;
+}
+
+.resume-profile {
+  align-self: start;
+  padding-top: 4mm;
+}
+
+.resume-profile h1 {
+  margin: 0 0 2mm;
+  font-size: 11.5mm;
+  line-height: 0.95;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+}
+
+.resume-profile .resume-lead {
+  margin: 0 0 6mm;
+  font-size: 6.3mm;
+  line-height: 1;
+  font-weight: 300;
+  text-transform: uppercase;
+  color: #2e2e2e;
+}
+
+.resume-profile .resume-note {
+  max-width: 52mm;
+  margin: 0;
+  font-size: 4.2mm;
+  line-height: 1.22;
+  color: #1f1f1f;
+}
+
+.resume-image {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  height: 100%;
+}
+
+.resume-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 84mm;
+  object-fit: contain;
+  filter: grayscale(100%) contrast(110%);
+}
+
+.resume-contact {
+  align-self: center;
+  padding-left: 8mm;
+}
+
+.resume-contact ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resume-contact li {
+  display: flex;
+  align-items: flex-start;
+  gap: 3mm;
+  margin: 0 0 4.2mm;
+  font-size: 3.9mm;
+  line-height: 1.18;
+  font-weight: 700;
+}
+
+.resume-contact a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Two-column intro section */
+.resume-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10mm;
+  padding: 0 16mm;
+}
+
+.resume-section--who-am-i,
+.resume-section--expert-in {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.resume-entry__summary,
+.resume-entry__highlights,
+.resume-entry__highlights li {
+  font-size: 3.7mm;
+  line-height: 1.28;
+  color: #222;
+}
+
+.resume-entry__summary {
+  margin: 0 0 6mm;
+}
+
+.resume-entry__highlights {
+  margin: 0;
+  padding-left: 4mm;
+}
+
+.resume-entry__highlights li {
+  margin: 0 0 1.8mm;
+}
+
+/* Icon tool list */
+.resume-icon-list {
+  display: flex;
+  gap: 6mm;
+  flex-wrap: wrap;
+  margin-top: 5mm;
+}
+
+.resume-icon-item {
+  text-align: center;
+}
+
+.resume-icon-badge {
+  display: grid;
+  place-items: center;
+  width: 16mm;
+  height: 16mm;
+  border-radius: 50%;
+  background: var(--accent);
+  font-size: 7mm;
+  font-weight: 700;
+}
+
+.resume-icon-rating {
+  margin-top: 2mm;
+  font-size: 3.5mm;
+  letter-spacing: 1mm;
+}
+
+/* Meter list */
+.resume-meter-list {
+  display: grid;
+  gap: 4mm;
+  margin-top: 4mm;
+}
+
+.resume-meter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 1mm;
+  align-items: center;
+}
+
+.resume-meter__label {
+  font-size: 3.8mm;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.resume-meter__value {
+  font-size: 3.2mm;
+  font-weight: 800;
+  background: var(--accent);
+  padding: 0.6mm 1.4mm;
+}
+
+.resume-meter__track {
+  grid-column: 1 / -1;
+  height: 2mm;
+  background: #d8d8d8;
+  position: relative;
+}
+
+.resume-meter__fill {
+  height: 100%;
+  background: #111;
+}
+
+/* Two yellow card columns */
+.resume-card-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8mm;
+  padding: 0 16mm;
+}
+
+.resume-card-panel {
+  background: var(--accent);
+  padding: 7mm 6mm 5mm;
+  min-height: 70mm;
+}
+
+.resume-card-panel .resume-section__title {
+  margin-bottom: 5mm;
+}
+
+.resume-card-grid {
+  display: grid;
+  gap: 0;
+}
+
+.resume-entry--timeline-card {
+  display: grid;
+  grid-template-columns: 22mm 1fr;
+  gap: 4mm;
+  padding: 3.5mm 0;
+  border-top: 1px solid rgb(0 0 0 / 10%);
+}
+
+.resume-entry--timeline-card:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.resume-entry--timeline-card .resume-entry__meta {
+  margin: 0;
+  font-size: 3.6mm;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.resume-entry--timeline-card .resume-entry__title {
+  margin: 0 0 0.8mm;
+  font-size: 5mm;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.resume-entry--timeline-card .resume-entry__summary {
+  margin: 0 0 0.8mm;
+  font-size: 4.2mm;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.resume-entry--timeline-card .resume-entry__highlights {
+  padding-left: 0;
+  list-style: none;
+}
+
+.resume-entry--timeline-card .resume-entry__highlights li {
+  margin: 0;
+  font-size: 3.2mm;
+  line-height: 1.18;
+}
+
+/* What I do */
+.resume-section--what-i-do .resume-section__title,
+.resume-section--interests .resume-section__title {
+  text-align: center;
+}
+
+.resume-service-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7mm;
+  padding: 0 16mm;
+}
+
+.resume-entry--service {
+  display: grid;
+  grid-template-columns: 11mm 1fr;
+  gap: 3mm;
+  align-items: start;
+}
+
+.resume-entry--service::before {
+  content: "";
+  display: block;
+  width: 11mm;
+  height: 11mm;
+  background: var(--accent);
+  border: 1px solid rgb(0 0 0 / 12%);
+}
+
+.resume-entry--service .resume-entry__title {
+  margin: 0 0 1mm;
+  font-size: 4.6mm;
+  line-height: 1;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.resume-entry--service .resume-entry__summary {
+  margin: 0;
+  font-size: 3.3mm;
+  line-height: 1.22;
+}
+
+/* Interest tags */
+.resume-hobby-tags {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4mm;
+  padding: 0 16mm 12mm;
+}
+
+.resume-hobby-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14mm;
+  background: var(--accent);
+  font-size: 3.8mm;
+  font-weight: 800;
+}
+
+/* Generic mappings */
+.resume-tags,
+.resume-fact-list,
+.resume-group-list {
+  margin: 0;
+}
+
+.resume-entry__title {
+  color: #111;
+}
+
+.resume-entry__meta {
+  color: #111;
+}
+
+a {
+  color: inherit;
+}
+
+/* Print */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .page {
+    margin: 0;
+    box-shadow: none;
+  }
+}

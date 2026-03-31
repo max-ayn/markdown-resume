@@ -7,6 +7,7 @@ type FrontMatter = {
   photo?: string;
   sidebarSections: Set<string>;
   theme: Record<string, string>;
+  meta: Record<string, string>;
 };
 
 type Token =
@@ -23,6 +24,7 @@ type Token =
 type Section = {
   title: string;
   slug: string;
+  region: "main" | "sidebar" | string;
   tokens: Token[];
 };
 
@@ -63,6 +65,7 @@ export class MarkdownHtmlGenerator {
         frontMatter: {
           sidebarSections: new Set(this.defaultSidebar),
           theme: {},
+          meta: {},
         },
       };
     }
@@ -81,6 +84,7 @@ export class MarkdownHtmlGenerator {
         frontMatter: {
           sidebarSections: new Set(this.defaultSidebar),
           theme: {},
+          meta: {},
         },
       };
     }
@@ -88,6 +92,7 @@ export class MarkdownHtmlGenerator {
     const frontMatter: FrontMatter = {
       sidebarSections: new Set(this.defaultSidebar),
       theme: {},
+      meta: {},
     };
 
     const raw = lines.slice(idx + 1, end);
@@ -147,11 +152,72 @@ export class MarkdownHtmlGenerator {
           if (j === raw.length - 1) i = j;
         }
       }
+
+      if (
+        key !== "template" && key !== "name" && key !== "title" && key !== "photo" &&
+        key !== "sidebar_sections" && key !== "theme"
+      ) {
+        frontMatter.meta[key] = this.stripQuotes(value);
+      }
     }
 
     return {
       body: lines.slice(end + 1).join("\n"),
       frontMatter,
+    };
+  }
+
+  private parseInlineGlobals(markdown: string): { body: string; inline: Partial<FrontMatter> } {
+    const lines = markdown.replaceAll("\r\n", "\n").split("\n");
+    const inline: Partial<FrontMatter> = {
+      sidebarSections: new Set<string>(),
+      theme: {},
+      meta: {},
+    };
+
+    let i = 0;
+    while (i < lines.length) {
+      const raw = lines[i].trim();
+      if (raw === "") {
+        i += 1;
+        continue;
+      }
+      if (raw.startsWith("#")) break;
+      if (!raw.startsWith("@")) break;
+
+      const match = raw.match(/^@([a-zA-Z0-9_-]+)\s*(.*)$/);
+      if (!match) {
+        i += 1;
+        continue;
+      }
+
+      const key = match[1].toLowerCase();
+      const value = this.stripQuotes(match[2].trim());
+
+      if (key === "template") inline.template = value;
+      else if (key === "name") inline.name = value;
+      else if (key === "title") inline.title = value;
+      else if (key === "photo") inline.photo = value;
+      else if (key === "sidebar") {
+        const parts = value.split(",");
+        for (const part of parts) {
+          const slug = this.slugify(part);
+          if (slug) (inline.sidebarSections as Set<string>).add(slug);
+        }
+      } else if (key === "accent") {
+        (inline.theme as Record<string, string>).accent = value;
+      } else if (key.startsWith("theme-")) {
+        const themeKey = this.slugify(key.slice(6));
+        if (themeKey) (inline.theme as Record<string, string>)[themeKey] = value;
+      } else {
+        (inline.meta as Record<string, string>)[key] = value;
+      }
+      i += 1;
+    }
+
+    return {
+      body: lines.slice(i).join("\n"),
+      inline,
     };
   }
 
@@ -203,6 +269,28 @@ export class MarkdownHtmlGenerator {
       attrs[match[1]] = this.stripQuotes(match[2]);
     }
     return attrs;
+  }
+
+  private regionAttr(region: string | undefined): string {
+    const value = (region ?? "").trim();
+    return value ? ` data-region="${this.escapeHtml(value)}"` : "";
+  }
+
+  private blockClassAttr(
+    baseClasses: string[],
+    attrs: Record<string, string>,
+    extraClasses: string[] = [],
+  ): string {
+    const classes = [...baseClasses, ...extraClasses];
+    const variant = this.slugify(attrs.variant ?? "");
+    if (variant) classes.push(`is-${variant}`);
+    const userClass = attrs.class?.trim();
+    if (userClass) {
+      for (const c of userClass.split(/\s+/)) {
+        if (c) classes.push(c);
+      }
+    }
+    return classes.length > 0 ? ` class="${classes.join(" ")}"` : "";
   }
 
   private tokenize(markdown: string): Token[] {
@@ -302,10 +390,104 @@ export class MarkdownHtmlGenerator {
     return items;
   }
 
+  private renderGroupList(lines: string[], attrs: Record<string, string>): string {
+    const classAttr = this.blockClassAttr(["resume-group-list"], attrs);
+    const region = this.regionAttr(attrs.region);
+    const items = this.parseItems(lines);
+    const out = [`<ul${classAttr}${region}>`];
+    for (const item of items) {
+      const match = item.match(/^\*\*([^*]+)\*\*:\s*(.+)$/);
+      if (match) {
+        out.push(
+          `<li class="resume-group-list__item"><span class="resume-group-list__label">${
+            this.formatInline(match[1])
+          }:</span> <span class="resume-group-list__value">${this.formatInline(match[2])}</span></li>`,
+        );
+      } else {
+        out.push(`<li class="resume-group-list__item">${this.formatInline(item)}</li>`);
+      }
+    }
+    out.push("</ul>");
+    return out.join("\n");
+  }
+
+  private renderDirectiveBlock(token: Extract<Token, { type: "directive" }>): string {
+    if (token.name === "entry") return this.renderEntry(token);
+
+    const text = token.lines.map((v) => v.trim()).filter(Boolean).join(" ");
+    const markdown = token.lines.join("\n");
+    const items = this.parseItems(token.lines);
+
+    if (token.name === "lead") {
+      return `<p${this.blockClassAttr(["resume-lead"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
+        this.formatInline(text)
+      }</p>`;
+    }
+    if (token.name === "note") {
+      return `<p${this.blockClassAttr(["resume-note"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
+        this.formatInline(text)
+      }</p>`;
+    }
+    if (token.name === "tags") {
+      return this.renderList(items, `resume-taglist${token.attrs.variant ? ` is-${this.slugify(token.attrs.variant)}` : ""}`, "resume-tag");
+    }
+    if (token.name === "fact-list") {
+      const list = this.renderList(items);
+      return `<div${this.blockClassAttr(["resume-fact-list"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
+        list
+      }</div>`;
+    }
+    if (token.name === "group-list") return this.renderGroupList(token.lines, token.attrs);
+    if (token.name === "image") {
+      const src = token.lines.map((v) => v.trim()).find(Boolean) ?? "";
+      const alt = token.attrs.alt?.trim() || "Image";
+      return `<figure${this.blockClassAttr(["resume-image"], token.attrs)}${this.regionAttr(token.attrs.region)}><img src="${
+        this.escapeHtml(src)
+      }" alt="${this.escapeHtml(alt)}" /></figure>`;
+    }
+    if (token.name === "header") {
+      return `<header${this.blockClassAttr(["resume-header"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
+        this.formatInline(text)
+      }</header>`;
+    }
+    if (token.name === "footer") {
+      return `<footer${this.blockClassAttr(["resume-footer"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
+        this.formatInline(text)
+      }</footer>`;
+    }
+    if (token.name === "quote") {
+      return `<blockquote${this.blockClassAttr(["resume-quote"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
+        this.formatInline(text)
+      }</blockquote>`;
+    }
+    if (token.name === "callout") {
+      return `<aside${this.blockClassAttr(["resume-callout"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
+        this.formatInline(text)
+      }</aside>`;
+    }
+    if (token.name === "container") {
+      return `<div${this.blockClassAttr(["resume-container"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
+        this.formatInline(text)
+      }</div>`;
+    }
+    if (token.name === "divider") {
+      return `<hr${this.blockClassAttr(["resume-divider"], token.attrs)}${this.regionAttr(token.attrs.region)} />`;
+    }
+    if (token.name === "html") {
+      return `<div${this.blockClassAttr(["resume-html"], token.attrs)}${this.regionAttr(token.attrs.region)}>${markdown}</div>`;
+    }
+
+    return `<div${this.blockClassAttr(["resume-custom", `resume-custom--${this.slugify(token.name)}`], token.attrs)}${
+      this.regionAttr(token.attrs.region)
+    }>${this.formatInline(text)}</div>`;
+  }
+
   private renderEntry(token: Extract<Token, { type: "directive" }>): string {
     let title = "";
     let meta = "";
     let links = "";
+    let summaryLine = "";
+    let image = "";
     const stack: string[] = [];
     const summary: string[] = [];
     const highlights: string[] = [];
@@ -325,6 +507,10 @@ export class MarkdownHtmlGenerator {
         }
       } else if (line.startsWith("@links ")) {
         links = line.slice(7).trim();
+      } else if (line.startsWith("@summary ")) {
+        summaryLine = line.slice(9).trim();
+      } else if (line.startsWith("@image ")) {
+        image = line.slice(7).trim();
       } else if (line.startsWith("- ")) {
         highlights.push(line.slice(2).trim());
       } else {
@@ -333,12 +519,20 @@ export class MarkdownHtmlGenerator {
     }
 
     const kind = token.attrs.kind ? this.slugify(token.attrs.kind) : "generic";
-    const out = [`<article class="resume-entry resume-entry--${kind}">`];
+    const attr = this.blockClassAttr(["resume-entry", `resume-entry--${kind}`], token.attrs);
+    const region = this.regionAttr(token.attrs.region);
+    const out = [`<article${attr}${region}>`];
     if (title) out.push(this.renderTextElement("h3", "resume-entry__title", title));
     if (meta) out.push(this.renderTextElement("p", "resume-entry__meta", meta));
     if (links) out.push(this.renderTextElement("p", "resume-entry__links", links));
-    if (summary.length > 0) {
-      out.push(this.renderTextElement("p", "resume-entry__summary", summary.join(" ")));
+    if (image) {
+      out.push(
+        `<figure class="resume-entry__image"><img src="${this.escapeHtml(image)}" alt="Entry image" /></figure>`,
+      );
+    }
+    const mergedSummary = [summaryLine, ...summary].filter(Boolean).join(" ");
+    if (mergedSummary.length > 0) {
+      out.push(this.renderTextElement("p", "resume-entry__summary", mergedSummary));
     }
     if (stack.length > 0) out.push(this.renderList(stack, "resume-entry__stack"));
     if (highlights.length > 0) out.push(this.renderList(highlights, "resume-entry__highlights"));
@@ -348,7 +542,9 @@ export class MarkdownHtmlGenerator {
 
   private renderSection(section: Section): string {
     const out = [
-      `<section class="resume-section resume-section--${section.slug}">`,
+      `<section class="resume-section resume-section--${section.slug}" data-section="${this.escapeHtml(section.slug)}" data-region="${
+        this.escapeHtml(section.region)
+      }">`,
       `<h2 class="resume-section__title">${this.formatInline(section.title)}</h2>`,
     ];
 
@@ -365,38 +561,7 @@ export class MarkdownHtmlGenerator {
           out.push(this.renderTextElement("h3", "resume-section__subtitle", pendingSubtitle));
           pendingSubtitle = null;
         }
-
-        if (token.name === "entry") {
-          out.push(this.renderEntry(token));
-          continue;
-        }
-
-        if (token.name === "lead") {
-          const text = token.lines.map((v) => v.trim()).filter(Boolean).join(" ");
-          out.push(this.renderTextElement("p", "resume-lead", text));
-          continue;
-        }
-
-        if (token.name === "note") {
-          const text = token.lines.map((v) => v.trim()).filter(Boolean).join(" ");
-          out.push(this.renderTextElement("p", "resume-note", text));
-          continue;
-        }
-
-        if (token.name === "tags") {
-          const items = this.parseItems(token.lines);
-          out.push(this.renderList(items, "resume-taglist", "resume-tag"));
-          continue;
-        }
-
-        if (token.name === "fact-list") {
-          const items = this.parseItems(token.lines);
-          out.push(`<div class="resume-fact-list">${this.renderList(items)}</div>`);
-          continue;
-        }
-
-        const fallback = token.lines.map((v) => v.trim()).filter(Boolean).join(" ");
-        if (fallback) out.push(`<p>${this.formatInline(fallback)}</p>`);
+        out.push(this.renderDirectiveBlock(token));
         continue;
       }
 
@@ -461,33 +626,7 @@ export class MarkdownHtmlGenerator {
           out.push(this.renderTextElement("h3", "resume-section__subtitle", pendingSubtitle));
           pendingSubtitle = null;
         }
-        if (token.name === "lead") {
-          const text = token.lines.map((v) => v.trim()).filter(Boolean).join(" ");
-          out.push(this.renderTextElement("p", "resume-lead", text));
-          continue;
-        }
-        if (token.name === "note") {
-          const text = token.lines.map((v) => v.trim()).filter(Boolean).join(" ");
-          out.push(this.renderTextElement("p", "resume-note", text));
-          continue;
-        }
-        if (token.name === "entry") {
-          out.push(this.renderEntry(token));
-          continue;
-        }
-        if (token.name === "tags") {
-          const items = this.parseItems(token.lines);
-          out.push(this.renderList(items, "resume-taglist", "resume-tag"));
-          continue;
-        }
-        if (token.name === "fact-list") {
-          const items = this.parseItems(token.lines);
-          out.push(`<div class="resume-fact-list">${this.renderList(items)}</div>`);
-          continue;
-        }
-
-        const fallback = token.lines.map((v) => v.trim()).filter(Boolean).join(" ");
-        if (fallback) out.push(`<p>${this.formatInline(fallback)}</p>`);
+        out.push(this.renderDirectiveBlock(token));
       }
     }
 
@@ -529,15 +668,17 @@ export class MarkdownHtmlGenerator {
       const token = tokens[i];
       if (token.type === "h2") {
         if (current) sections.push(current);
-        current = { title: token.text, slug: this.slugify(token.text), tokens: [] };
+        const slug = this.slugify(token.text);
+        const region = frontMatter.sidebarSections.has(slug) ? "sidebar" : "main";
+        current = { title: token.text, slug, region, tokens: [] };
       } else if (current) {
         current.tokens.push(token);
       }
     }
     if (current) sections.push(current);
 
-    const sidebar = sections.filter((s) => frontMatter.sidebarSections.has(s.slug));
-    const main = sections.filter((s) => !frontMatter.sidebarSections.has(s.slug));
+    const sidebar = sections.filter((s) => s.region === "sidebar");
+    const main = sections.filter((s) => s.region !== "sidebar");
 
     const photoHtml = frontMatter.photo
       ? `<figure class="resume-photo"><img src="${this.escapeHtml(frontMatter.photo)}" alt="Profile photo" /></figure>`
@@ -592,9 +733,22 @@ export class MarkdownHtmlGenerator {
   }
 
   public renderDocument(markdown: string, css: string): string {
-    const { body, frontMatter } = this.parseFrontMatter(markdown);
-    const content = this.renderResume(body, frontMatter);
-    const themeOverride = this.buildThemeOverride(frontMatter.theme);
+    const { body: yamlBody, frontMatter } = this.parseFrontMatter(markdown);
+    const { body, inline } = this.parseInlineGlobals(yamlBody);
+    const merged: FrontMatter = {
+      ...frontMatter,
+      template: inline.template ?? frontMatter.template,
+      name: inline.name ?? frontMatter.name,
+      title: inline.title ?? frontMatter.title,
+      photo: inline.photo ?? frontMatter.photo,
+      sidebarSections: (inline.sidebarSections && inline.sidebarSections.size > 0)
+        ? inline.sidebarSections
+        : frontMatter.sidebarSections,
+      theme: { ...frontMatter.theme, ...(inline.theme ?? {}) },
+      meta: { ...frontMatter.meta, ...(inline.meta ?? {}) },
+    };
+    const content = this.renderResume(body, merged);
+    const themeOverride = this.buildThemeOverride(merged.theme);
     const mergedCss = themeOverride ? `${themeOverride}\n${css}` : css;
     return this.generateHtmlTemplate(content, mergedCss);
   }

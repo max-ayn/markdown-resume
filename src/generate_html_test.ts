@@ -177,3 +177,75 @@ Deno.test("supports style markers like [title] for targeted css hooks", async ()
     assertStringIncludes(html, 'class="resume-item--impact"');
   });
 });
+
+Deno.test("supports inline mode directives before first heading", async () => {
+  await withTempDir(async (dir) => {
+    const output = join(dir, "out", "resume.html");
+    const html = await render(
+      `@name Jane Doe
+@title Staff Engineer
+@photo ./assets/jane.png
+@sidebar projects, skills
+@theme-accent #123456
+
+# Jane Doe
+
+:::contact
+- jane@example.com
+:::
+
+## Summary
+:::lead
+Builder of reliable systems.
+:::
+
+## Projects
+- Internal platform
+
+## Experience
+- Company A
+`,
+      output,
+    );
+
+    assertStringIncludes(html, '<figure class="resume-photo"><img src="./assets/jane.png" alt="Profile photo" /></figure>');
+    assertMatch(
+      html,
+      /<aside class="resume-sidebar">[\s\S]*resume-section--projects[\s\S]*<\/aside>/,
+    );
+    assertStringIncludes(html, "--accent: #123456;");
+  });
+});
+
+Deno.test("renders custom and extended built-in blocks with variant/class hooks", async () => {
+  await withTempDir(async (dir) => {
+    const output = join(dir, "out", "resume.html");
+    const html = await render(
+      `# Jane Doe
+
+## Summary
+:::quote{variant=featured class=testimonial}
+Strong ownership and delivery mindset.
+:::
+
+:::group-list
+- **Languages:** TypeScript, Python
+:::
+
+:::image{variant=avatar class=profile-pic alt="Profile"}
+./assets/jane.png
+:::
+
+:::hero{variant=featured class=hero-box}
+Custom semantic block
+:::
+`,
+      output,
+    );
+
+    assertStringIncludes(html, 'class="resume-quote is-featured testimonial"');
+    assertStringIncludes(html, 'class="resume-group-list"');
+    assertStringIncludes(html, 'class="resume-image is-avatar profile-pic"');
+    assertStringIncludes(html, 'class="resume-custom resume-custom--hero is-featured hero-box"');
+  });
+});
