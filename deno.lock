@@ -4,6 +4,7 @@
     "jsr:@std/assert@1": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/path@^1.1.4": "1.1.4",
+    "npm:@docling/docling-core@^0.0.7": "0.0.7",
     "npm:playwright@*": "1.58.2",
     "npm:playwright@^1.58.2": "1.58.2"
   },
@@ -25,6 +26,9 @@
     }
   },
   "npm": {
+    "@docling/docling-core@0.0.7": {
+      "integrity": "sha512-5gobonNYuhX1SW7lBpldtRFsTGIGdpLC5tAQnvUAGWJdzmbS5D5nrUWF4GebbKP1f9P3AmK65Bqeu5bb36zP2A=="
+    },
     "fsevents@2.3.2": {
       "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
       "os": ["darwin"],
@@ -49,6 +53,7 @@
     "dependencies": [
       "jsr:@std/assert@1",
       "jsr:@std/path@^1.1.4",
+      "npm:@docling/docling-core@^0.0.7",
       "npm:playwright@^1.58.2"
     ]
   }
