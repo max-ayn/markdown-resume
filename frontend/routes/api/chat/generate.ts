@@ -42,10 +42,13 @@ const ALLOWED_SELECTOR_BASES = [
 
 const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 10;
+const OPENAI_TIMEOUT_MS = 60_000;
 const limiter = new Map<string, { startedAt: number; count: number }>();
 const htmlGenerator = new MarkdownHtmlGenerator();
 
-function checkRateLimit(key: string): { ok: true } | { ok: false; retryAfterSec: number } {
+function checkRateLimit(
+  key: string,
+): { ok: true } | { ok: false; retryAfterSec: number } {
   const now = Date.now();
   const item = limiter.get(key);
 
@@ -55,7 +58,9 @@ function checkRateLimit(key: string): { ok: true } | { ok: false; retryAfterSec:
   }
 
   if (item.count >= MAX_REQUESTS_PER_WINDOW) {
-    const retryAfterSec = Math.ceil((WINDOW_MS - (now - item.startedAt)) / 1000);
+    const retryAfterSec = Math.ceil(
+      (WINDOW_MS - (now - item.startedAt)) / 1000,
+    );
     return { ok: false, retryAfterSec };
   }
 
@@ -80,7 +85,9 @@ function validateRequiredSections(markdown: string): string | null {
 
   let pointer = -1;
   for (const expected of REQUIRED_SECTIONS) {
-    const nextIndex = headings.findIndex((value, idx) => idx > pointer && value === expected);
+    const nextIndex = headings.findIndex((value, idx) =>
+      idx > pointer && value === expected
+    );
     if (nextIndex === -1) {
       return `Missing or out-of-order section: ${expected}`;
     }
@@ -120,7 +127,9 @@ function validateCssSelectors(css: string): string | null {
     const selectorGroup = match[1].trim();
     if (selectorGroup.startsWith("@")) continue;
 
-    const selectors = selectorGroup.split(",").map((v) => v.trim()).filter(Boolean);
+    const selectors = selectorGroup.split(",").map((v) => v.trim()).filter(
+      Boolean,
+    );
     for (const selector of selectors) {
       if (!isAllowedSelector(selector)) {
         return `Forbidden selector outside semantic resume scope: ${selector}`;
@@ -166,7 +175,7 @@ function buildSystemPrompt(): string {
   return [
     "You generate a resume in Markdown and CSS.",
     "Return strict JSON only. No markdown fences. No prose outside JSON.",
-    "JSON schema: { \"markdown\": string, \"css\": string, \"notes\"?: string }.",
+    'JSON schema: { "markdown": string, "css": string, "notes"?: string }.',
     "Language must be English.",
     "Ensure markdown has section headings in this order:",
     "## Summary, ## Experience, ## Projects, ## Education, ## Skills, ## Languages, ## Interests",
@@ -182,7 +191,11 @@ function buildSystemPrompt(): string {
   ].join("\n");
 }
 
-function buildUserPrompt(data: Required<Pick<GenerateRequest, "instruction" | "markdown" | "css">> & { preset: string }): string {
+function buildUserPrompt(
+  data: Required<Pick<GenerateRequest, "instruction" | "markdown" | "css">> & {
+    preset: string;
+  },
+): string {
   return [
     `Style preset: ${data.preset}`,
     "User instruction:",
@@ -206,7 +219,8 @@ function uint8ToBase64(data: Uint8Array): string {
 
 export const handler = define.handlers({
   async POST(ctx) {
-    const ip = ctx.req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+    const ip = ctx.req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "local";
     const limit = checkRateLimit(ip);
     if (!limit.ok) {
       return new Response("Rate limit exceeded", {
@@ -222,22 +236,30 @@ export const handler = define.handlers({
       return new Response("Invalid JSON body", { status: 400 });
     }
 
-    const instruction = typeof body.instruction === "string" ? body.instruction.trim() : "";
+    const instruction = typeof body.instruction === "string"
+      ? body.instruction.trim()
+      : "";
     const markdown = typeof body.markdown === "string" ? body.markdown : "";
     const css = typeof body.css === "string" ? body.css : "";
-    const preset = typeof body.preset === "string" && body.preset.length > 0 ? body.preset : "modern";
+    const preset = typeof body.preset === "string" && body.preset.length > 0
+      ? body.preset
+      : "modern";
     const includePreviewImage = body.includePreviewImage !== false;
 
     if (instruction.length === 0) {
       return new Response("Instruction is required", { status: 400 });
     }
     if (instruction.length > 2000) {
-      return new Response("Instruction is too long (max 2000 chars)", { status: 400 });
+      return new Response("Instruction is too long (max 2000 chars)", {
+        status: 400,
+      });
     }
 
     const apiKey = Deno.env.get("OPENAI_API_KEY");
     if (!apiKey) {
-      return new Response("Missing OPENAI_API_KEY in environment", { status: 500 });
+      return new Response("Missing OPENAI_API_KEY in environment", {
+        status: 500,
+      });
     }
 
     const model = Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini";
@@ -275,7 +297,11 @@ export const handler = define.handlers({
           imageDataUrl = `data:image/png;base64,${uint8ToBase64(imageBytes)}`;
         } else {
           const err = new TextDecoder().decode(result.stderr).trim();
-          console.error(`[chat.generate] preview_image_failed ${err || `exit ${result.code}`}`);
+          console.error(
+            `[chat.generate] preview_image_failed ${
+              err || `exit ${result.code}`
+            }`,
+          );
         }
       } finally {
         await Deno.remove(tempDir, { recursive: true }).catch(() => undefined);
@@ -309,21 +335,39 @@ export const handler = define.handlers({
 
     const startedAt = Date.now();
     console.log(
-      `[chat.generate] start ip=${ip} model=${model} instruction_chars=${instruction.length} md_chars=${markdown.length} css_chars=${css.length} with_image=${imageDataUrl.length > 0}`,
+      `[chat.generate] start ip=${ip} model=${model} instruction_chars=${instruction.length} md_chars=${markdown.length} css_chars=${css.length} with_image=${
+        imageDataUrl.length > 0
+      }`,
     );
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    let response: Response;
+    try {
+      response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(OPENAI_TIMEOUT_MS),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.toLowerCase().includes("aborted")) {
+        console.error(
+          `[chat.generate] timeout model=${model} timeout_ms=${OPENAI_TIMEOUT_MS}`,
+        );
+        return new Response("LLM request timed out", { status: 504 });
+      }
+      console.error(`[chat.generate] request_error ${message}`);
+      return new Response("LLM request failed", { status: 502 });
+    }
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error(`[chat.generate] upstream_error status=${response.status} body=${errText}`);
+      console.error(
+        `[chat.generate] upstream_error status=${response.status} body=${errText}`,
+      );
       return new Response("LLM request failed", { status: 502 });
     }
 
@@ -344,7 +388,8 @@ export const handler = define.handlers({
     }
 
     if (
-      !parsed || typeof parsed !== "object" || typeof parsed.markdown !== "string" ||
+      !parsed || typeof parsed !== "object" ||
+      typeof parsed.markdown !== "string" ||
       typeof parsed.css !== "string"
     ) {
       return new Response("LLM output schema invalid", { status: 502 });
@@ -361,16 +406,22 @@ export const handler = define.handlers({
 
     const sectionError = validateRequiredSections(parsed.markdown);
     if (sectionError) {
-      return new Response(`Generated markdown invalid: ${sectionError}`, { status: 502 });
+      return new Response(`Generated markdown invalid: ${sectionError}`, {
+        status: 502,
+      });
     }
 
     const cssError = validateCssSelectors(parsed.css);
     if (cssError) {
-      return new Response(`Generated CSS invalid: ${cssError}`, { status: 502 });
+      return new Response(`Generated CSS invalid: ${cssError}`, {
+        status: 502,
+      });
     }
 
     console.log(
-      `[chat.generate] ok ip=${ip} model=${model} elapsed_ms=${Date.now() - startedAt} out_md_chars=${parsed.markdown.length} out_css_chars=${parsed.css.length}`,
+      `[chat.generate] ok ip=${ip} model=${model} elapsed_ms=${
+        Date.now() - startedAt
+      } out_md_chars=${parsed.markdown.length} out_css_chars=${parsed.css.length}`,
     );
 
     return Response.json(parsed);

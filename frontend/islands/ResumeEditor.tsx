@@ -24,6 +24,31 @@ const STORAGE_KEYS = {
   markdown: "resume-editor:v2:markdown",
   css: "resume-editor:v2:css",
 };
+const PREVIEW_TIMEOUT_MS = 30_000;
+const PDF_TIMEOUT_MS = 45_000;
+const CHAT_TIMEOUT_MS = 90_000;
+
+async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(
+        `Request timed out after ${Math.ceil(timeoutMs / 1000)}s`,
+      );
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 function changedLineCount(before: string, after: string): number {
   const left = before.split(/\r?\n/);
@@ -149,7 +174,10 @@ export default function ResumeEditor(props: ResumeEditorProps) {
   }, [tab, markdownText, cssText]);
 
   useEffect(() => {
+    let isCancelled = false;
+    const controller = new AbortController();
     const timeout = setTimeout(async () => {
+      const requestTimeout = setTimeout(() => controller.abort(), PREVIEW_TIMEOUT_MS);
       try {
         const response = await fetch("/api/preview", {
           method: "POST",
@@ -160,6 +188,7 @@ export default function ResumeEditor(props: ResumeEditorProps) {
             markdown: markdownText,
             css: cssText,
           }),
+          signal: controller.signal,
         });
 
         if (!response.ok) {
@@ -168,22 +197,36 @@ export default function ResumeEditor(props: ResumeEditorProps) {
         }
 
         const data = (await response.json()) as { html: string };
+        if (isCancelled) return;
         setPreviewError("");
         setPreviewHtml(data.html);
       } catch (error) {
+        if (isCancelled) return;
+        if (error instanceof DOMException && error.name === "AbortError") {
+          setPreviewError(
+            `Preview request timed out after ${Math.ceil(PREVIEW_TIMEOUT_MS / 1000)}s`,
+          );
+          return;
+        }
         const message = error instanceof Error ? error.message : String(error);
         setPreviewError(message);
+      } finally {
+        clearTimeout(requestTimeout);
       }
     }, 180);
 
-    return () => clearTimeout(timeout);
+    return () => {
+      isCancelled = true;
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [markdownText, cssText]);
 
   const downloadPdf = async () => {
     setIsDownloadingPdf(true);
     setDownloadError("");
     try {
-      const response = await fetch("/api/pdf", {
+      const response = await fetchWithTimeout("/api/pdf", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -192,7 +235,7 @@ export default function ResumeEditor(props: ResumeEditorProps) {
           markdown: markdownText,
           css: cssText,
         }),
-      });
+      }, PDF_TIMEOUT_MS);
 
       if (!response.ok) {
         const body = await response.text();
@@ -228,7 +271,7 @@ export default function ResumeEditor(props: ResumeEditorProps) {
     setChatError("");
 
     try {
-      const response = await fetch("/api/chat/generate", {
+      const response = await fetchWithTimeout("/api/chat/generate", {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -240,7 +283,7 @@ export default function ResumeEditor(props: ResumeEditorProps) {
           preset: "modern",
           includePreviewImage: usePreviewImage,
         }),
-      });
+      }, CHAT_TIMEOUT_MS);
 
       if (!response.ok) {
         const text = await response.text();
@@ -281,7 +324,9 @@ export default function ResumeEditor(props: ResumeEditorProps) {
     setDraft(null);
   };
 
-  const markdownChanges = draft ? changedLineCount(markdownText, draft.markdown) : 0;
+  const markdownChanges = draft
+    ? changedLineCount(markdownText, draft.markdown)
+    : 0;
   const cssChanges = draft ? changedLineCount(cssText, draft.css) : 0;
 
   return (
@@ -323,10 +368,18 @@ export default function ResumeEditor(props: ResumeEditorProps) {
               {isDownloadingPdf ? "Generating..." : "Download PDF"}
             </button>
           </header>
-          {downloadError ? <pre class="preview-error">{downloadError}</pre> : null}
+          {downloadError
+            ? <pre class="preview-error">{downloadError}</pre>
+            : null}
           {previewError
             ? <pre class="preview-error">{previewError}</pre>
-            : <iframe title="Resume preview" class="preview-frame" srcDoc={previewHtml} />}
+            : (
+              <iframe
+                title="Resume preview"
+                class="preview-frame"
+                srcDoc={previewHtml}
+              />
+            )}
         </section>
       </div>
 
@@ -358,7 +411,9 @@ export default function ResumeEditor(props: ResumeEditorProps) {
                   type="checkbox"
                   checked={usePreviewImage}
                   onChange={(event) =>
-                    setUsePreviewImage((event.currentTarget as HTMLInputElement).checked)}
+                    setUsePreviewImage(
+                      (event.currentTarget as HTMLInputElement).checked,
+                    )}
                   disabled={isGenerating}
                 />
                 <span>Use preview image context</span>
@@ -374,7 +429,9 @@ export default function ResumeEditor(props: ResumeEditorProps) {
               class="chat-input"
               value={chatInput}
               onInput={(event) =>
-                setChatInput((event.currentTarget as HTMLTextAreaElement).value)}
+                setChatInput(
+                  (event.currentTarget as HTMLTextAreaElement).value,
+                )}
               maxLength={2000}
               disabled={isGenerating}
               placeholder="Example: Rewrite summary for senior backend roles and modernize style while keeping one-page fit."
@@ -454,8 +511,16 @@ export default function ResumeEditor(props: ResumeEditorProps) {
               {draft.notes ? <p class="diff-notes">{draft.notes}</p> : null}
 
               <div class="diff-actions">
-                <button type="button" class="discard-button" onClick={discardDraft}>Discard</button>
-                <button type="button" class="apply-button" onClick={applyDraft}>Apply</button>
+                <button
+                  type="button"
+                  class="discard-button"
+                  onClick={discardDraft}
+                >
+                  Discard
+                </button>
+                <button type="button" class="apply-button" onClick={applyDraft}>
+                  Apply
+                </button>
               </div>
             </div>
           </section>
