@@ -363,6 +363,33 @@ export class MarkdownHtmlGenerator {
     return attrs;
   }
 
+  private roleSlug(attrs: Record<string, string>): string {
+    return this.slugify(attrs.role ?? "");
+  }
+
+  private normalizeDirectiveLines(markdown: string): string {
+    const normalized = markdown.replaceAll("\r\n", "\n")
+      // Split chained closers/openers or trailing closers to distinct lines.
+      .replaceAll(/\s+:::/g, "\n:::");
+
+    const out: string[] = [];
+    for (const raw of normalized.split("\n")) {
+      const line = raw.trimEnd();
+      const inlineDirective = line.match(
+        /^:::\s*([a-zA-Z0-9_-]+)(?:\{([^}]*)\})?\s+(.+)$/,
+      );
+      if (inlineDirective && !inlineDirective[3].startsWith(":::")) {
+        const name = inlineDirective[1];
+        const attrs = inlineDirective[2] ? `{${inlineDirective[2]}}` : "";
+        out.push(`:::${name}${attrs}`);
+        out.push(inlineDirective[3].trim());
+        continue;
+      }
+      out.push(line);
+    }
+    return out.join("\n");
+  }
+
   private regionAttr(region: string | undefined): string {
     const value = (region ?? "").trim();
     return value ? ` data-region="${this.escapeHtml(value)}"` : "";
@@ -386,13 +413,18 @@ export class MarkdownHtmlGenerator {
   }
 
   private tokenize(markdown: string): Token[] {
-    const lines = markdown.replaceAll("\r\n", "\n").split("\n");
+    const lines = this.normalizeDirectiveLines(markdown).split("\n");
     const tokens: Token[] = [];
 
     let i = 0;
     while (i < lines.length) {
       const line = lines[i].trim();
       if (line === "") {
+        i += 1;
+        continue;
+      }
+      if (line.startsWith("<!--")) {
+        while (i < lines.length && !lines[i].includes("-->")) i += 1;
         i += 1;
         continue;
       }
@@ -562,6 +594,17 @@ export class MarkdownHtmlGenerator {
         this.regionAttr(token.attrs.region)
       }>${childHtml}</section>`;
     }
+    if (token.name === "grid") {
+      const role = this.roleSlug(token.attrs);
+      const classes = ["resume-grid"];
+      if (role) classes.push(`resume-grid--${role}`);
+      if (role === "presentation") classes.push("resume-presentation-block");
+      if (role === "experience-panels") classes.push("resume-experience-cards");
+      if (role === "service-grid") classes.push("resume-service-grid");
+      return `<section${this.blockClassAttr(classes, token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${childHtml}</section>`;
+    }
     if (token.name === "presentation-block") {
       return `<section${
         this.blockClassAttr(["resume-presentation-block"], token.attrs)
@@ -626,6 +669,38 @@ export class MarkdownHtmlGenerator {
       }
       out.push("</div>");
       return out.join("\n");
+    }
+    if (token.name === "list") {
+      const role = this.roleSlug(token.attrs);
+      const variant = this.slugify(token.attrs.variant ?? "");
+      if (role === "interests" || variant === "boxed-icons") {
+        const out = [
+          `<div${this.blockClassAttr(["resume-hobby-tags"], token.attrs)}${
+            this.regionAttr(token.attrs.region)
+          }>`,
+        ];
+        for (const item of items) {
+          const [iconRaw, labelRaw] = item.includes("|")
+            ? item.split("|", 2).map((v) => v.trim())
+            : [item, ""];
+          const label = labelRaw || iconRaw;
+          const icon = labelRaw ? iconRaw : "";
+          out.push('<div class="resume-hobby-tag">');
+          if (icon) out.push(this.formatInline(icon));
+          out.push(this.formatInline(label));
+          out.push("</div>");
+        }
+        out.push("</div>");
+        return out.join("\n");
+      }
+
+      if (variant === "tags") {
+        return this.renderList(items, "resume-taglist", "resume-tag");
+      }
+
+      return `<div${this.blockClassAttr(["resume-list"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${this.renderList(items)}</div>`;
     }
     if (token.name === "icon-list") {
       const out = [
@@ -742,9 +817,20 @@ export class MarkdownHtmlGenerator {
       }>${this.formatInline(text)}</aside>`;
     }
     if (token.name === "container") {
-      return `<div${this.blockClassAttr(["resume-container"], token.attrs)}${
+      const role = this.roleSlug(token.attrs);
+      if (role === "services" && childHtml.trim().length > 0) {
+        return childHtml;
+      }
+      const classes = ["resume-container"];
+      if (role) classes.push(`resume-container--${role}`);
+      if (role === "column") classes.push("resume-col");
+      if (role === "panel") classes.push("resume-card-panel");
+      if (role === "card-grid") classes.push("resume-card-grid");
+      if (role === "services") classes.push("resume-section", "resume-section--services");
+      const body = childHtml.trim().length > 0 ? childHtml : this.formatInline(text);
+      return `<div${this.blockClassAttr(classes, token.attrs)}${
         this.regionAttr(token.attrs.region)
-      }>${this.formatInline(text)}</div>`;
+      }>${body}</div>`;
     }
     if (token.name === "divider") {
       return `<hr${this.blockClassAttr(["resume-divider"], token.attrs)}${
@@ -816,35 +902,70 @@ export class MarkdownHtmlGenerator {
     const stack: string[] = [];
     const summary: string[] = [];
     const highlights: string[] = [];
+    let pendingDirectiveKey: string | null = null;
 
     for (const raw of token.lines) {
-      const line = raw.trim();
+      const rawLine = raw.trim();
+      const line = pendingDirectiveKey
+        ? `@${pendingDirectiveKey} ${rawLine}`
+        : rawLine;
+      pendingDirectiveKey = null;
       if (line === "") continue;
       if (line.startsWith("### ")) {
         title = line.slice(4).trim();
-      } else if (line.startsWith("@meta ")) {
-        meta = line.slice(6).trim();
-      } else if (line.startsWith("@date ")) {
-        date = line.slice(6).trim();
-      } else if (line.startsWith("@org ")) {
-        org = line.slice(5).trim();
-      } else if (line.startsWith("@stack ")) {
-        const parts = line.slice(7).split(",");
-        for (const part of parts) {
-          const value = part.trim();
-          if (value) stack.push(value);
+      } else if (line.startsWith("@")) {
+        const dangling = line.match(/^@([a-zA-Z0-9_-]+)\s*$/);
+        if (dangling) {
+          pendingDirectiveKey = dangling[1].toLowerCase();
+          continue;
         }
-      } else if (line.startsWith("@links ")) {
-        links = line.slice(7).trim();
-      } else if (line.startsWith("@summary ")) {
-        summaryLine = line.slice(9).trim();
-      } else if (line.startsWith("@image ")) {
-        image = line.slice(7).trim();
+        const chunks = [...line.matchAll(/@([a-zA-Z0-9_-]+)\s+([^@]+)/g)];
+        if (chunks.length === 0) {
+          summary.push(line);
+          continue;
+        }
+        for (const chunk of chunks) {
+          const key = chunk[1].toLowerCase();
+          const value = chunk[2].trim();
+          if (key === "meta") meta = value;
+          else if (key === "date") date = value;
+          else if (key === "org") org = value;
+          else if (key === "links") links = value;
+          else if (key === "summary") summaryLine = value;
+          else if (key === "image") image = value;
+          else if (key === "stack") {
+            const parts = value.split(",");
+            for (const part of parts) {
+              const item = part.trim();
+              if (item) stack.push(item);
+            }
+          }
+        }
+        continue;
       } else if (line.startsWith("- ")) {
         highlights.push(line.slice(2).trim());
       } else {
         summary.push(line);
       }
+    }
+
+    // Recover structured directives if malformed source pushed them into summary text.
+    const rawSummary = [summaryLine, ...summary].filter(Boolean).join(" ").trim();
+    if (rawSummary.includes("@")) {
+      const chunks = [...rawSummary.matchAll(/@([a-zA-Z0-9_-]+)\s+([^@]+)/g)];
+      for (const chunk of chunks) {
+        const key = chunk[1].toLowerCase();
+        const value = chunk[2].trim();
+        if (!value) continue;
+        if (key === "date" && !date) date = value;
+        else if (key === "org" && !org) org = value;
+        else if (key === "meta" && !meta) meta = value;
+      }
+      const cleaned = rawSummary.replace(/@([a-zA-Z0-9_-]+)\s+([^@]+)/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      summaryLine = cleaned;
+      summary.length = 0;
     }
 
     const kind = token.attrs.kind ? this.slugify(token.attrs.kind) : "generic";
@@ -889,6 +1010,7 @@ export class MarkdownHtmlGenerator {
             this.escapeHtml(iconName)
           }</span>`,
         );
+        out.push('<div class="resume-entry__content">');
       }
       if (title) {
         out.push(this.renderTextElement("h3", "resume-entry__title", title));
@@ -917,6 +1039,9 @@ export class MarkdownHtmlGenerator {
       }
       if (highlights.length > 0) {
         out.push(this.renderList(highlights, "resume-entry__highlights"));
+      }
+      if (kind === "service" && iconName) {
+        out.push("</div>");
       }
     }
     out.push("</article>");
