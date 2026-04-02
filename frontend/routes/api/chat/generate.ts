@@ -1,11 +1,13 @@
 import { define } from "../../../utils.ts";
 import { fromFileUrl, join } from "@std/path";
-import { MarkdownHtmlGenerator } from "../../../../src/generate_html.ts";
+import { renderWithAssets } from "../_render_with_assets.ts";
 
 interface GenerateRequest {
   instruction?: string;
   markdown?: string;
   css?: string;
+  markdownPath?: string;
+  cssPath?: string;
   preset?: "modern" | string;
   includePreviewImage?: boolean;
 }
@@ -44,8 +46,6 @@ const WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 10;
 const OPENAI_TIMEOUT_MS = 60_000;
 const limiter = new Map<string, { startedAt: number; count: number }>();
-const htmlGenerator = new MarkdownHtmlGenerator();
-
 function checkRateLimit(
   key: string,
 ): { ok: true } | { ok: false; retryAfterSec: number } {
@@ -244,6 +244,10 @@ export const handler = define.handlers({
     const preset = typeof body.preset === "string" && body.preset.length > 0
       ? body.preset
       : "modern";
+    const markdownPath = typeof body.markdownPath === "string"
+      ? body.markdownPath
+      : "";
+    const cssPath = typeof body.cssPath === "string" ? body.cssPath : "";
     const includePreviewImage = body.includePreviewImage !== false;
 
     if (instruction.length === 0) {
@@ -265,7 +269,12 @@ export const handler = define.handlers({
     const model = Deno.env.get("OPENAI_MODEL") || "gpt-5.4-mini";
     let imageDataUrl = "";
     if (includePreviewImage) {
-      const previewHtml = htmlGenerator.renderDocument(markdown, css);
+      const previewHtml = await renderWithAssets({
+        markdown,
+        css,
+        markdownPath,
+        cssPath,
+      });
       const tempDir = await Deno.makeTempDir({ prefix: "resume-chat-image-" });
       const htmlPath = join(tempDir, "preview.html");
       const imagePath = join(tempDir, "preview.png");

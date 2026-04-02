@@ -87,6 +87,16 @@ body {
   font-size: 14px;
 }
 
+.code-editor .cm-color-swatch {
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-left: 0.42em;
+  border-radius: 2px;
+  border: 1px solid rgb(15 23 42 / 22%);
+  vertical-align: -0.1em;
+}
+
 .preview-pane {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -104,6 +114,33 @@ body {
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+}
+
+.preview-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.overflow-indicator {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.16rem 0.52rem;
+  font-size: 0.68rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.overflow-indicator.is-fit {
+  color: #1b6f3a;
+  background: #e9f8ee;
+  border-color: #b9e8c6;
+}
+
+.overflow-indicator.is-overflow {
+  color: #8e2a1f;
+  background: #fff0eb;
+  border-color: #f3bfb3;
 }
 
 .download-button {

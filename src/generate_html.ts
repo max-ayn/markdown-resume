@@ -5,6 +5,7 @@ type FrontMatter = {
   name?: string;
   title?: string;
   photo?: string;
+  stylesheets: string[];
   sidebarSections: Set<string>;
   theme: Record<string, string>;
   meta: Record<string, string>;
@@ -58,6 +59,38 @@ export class MarkdownHtmlGenerator {
     return trimmed;
   }
 
+  private parseInlineList(value: string): string[] {
+    const trimmed = value.trim();
+    if (trimmed === "") return [];
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      return trimmed
+        .slice(1, -1)
+        .split(",")
+        .map((part) => this.stripQuotes(part).trim())
+        .filter(Boolean);
+    }
+    const single = this.stripQuotes(trimmed).trim();
+    return single ? [single] : [];
+  }
+
+  private readIndentedList(
+    lines: string[],
+    startIndex: number,
+  ): { values: string[]; endIndex: number } {
+    const values: string[] = [];
+    let endIndex = startIndex;
+    for (let i = startIndex + 1; i < lines.length; i += 1) {
+      const row = lines[i];
+      if (!row.startsWith("  ")) break;
+      const trimmed = row.trim();
+      if (!trimmed.startsWith("- ")) break;
+      const value = this.stripQuotes(trimmed.slice(2)).trim();
+      if (value) values.push(value);
+      endIndex = i;
+    }
+    return { values, endIndex };
+  }
+
   private parseFrontMatter(
     markdown: string,
   ): { body: string; frontMatter: FrontMatter } {
@@ -72,6 +105,7 @@ export class MarkdownHtmlGenerator {
       return {
         body: lines.join("\n"),
         frontMatter: {
+          stylesheets: [],
           sidebarSections: new Set(this.defaultSidebar),
           theme: {},
           meta: {},
@@ -91,6 +125,7 @@ export class MarkdownHtmlGenerator {
       return {
         body: lines.join("\n"),
         frontMatter: {
+          stylesheets: [],
           sidebarSections: new Set(this.defaultSidebar),
           theme: {},
           meta: {},
@@ -99,6 +134,7 @@ export class MarkdownHtmlGenerator {
     }
 
     const frontMatter: FrontMatter = {
+      stylesheets: [],
       sidebarSections: new Set(this.defaultSidebar),
       theme: {},
       meta: {},
@@ -118,6 +154,21 @@ export class MarkdownHtmlGenerator {
       if (key === "name") frontMatter.name = this.stripQuotes(value);
       if (key === "title") frontMatter.title = this.stripQuotes(value);
       if (key === "photo") frontMatter.photo = this.stripQuotes(value);
+      if (
+        key === "icons" || key === "icon" || key === "fonts" ||
+        key === "font" || key === "stylesheets"
+      ) {
+        const inlineValues = this.parseInlineList(value);
+        if (inlineValues.length > 0) {
+          frontMatter.stylesheets.push(...inlineValues);
+        } else {
+          const nested = this.readIndentedList(raw, i);
+          if (nested.values.length > 0) {
+            frontMatter.stylesheets.push(...nested.values);
+            i = nested.endIndex;
+          }
+        }
+      }
 
       if (key === "sidebar_sections") {
         if (value.startsWith("[") && value.endsWith("]")) {
@@ -167,7 +218,9 @@ export class MarkdownHtmlGenerator {
       if (
         key !== "template" && key !== "name" && key !== "title" &&
         key !== "photo" &&
-        key !== "sidebar_sections" && key !== "theme"
+        key !== "sidebar_sections" && key !== "theme" &&
+        key !== "icons" && key !== "icon" && key !== "fonts" &&
+        key !== "font" && key !== "stylesheets"
       ) {
         frontMatter.meta[key] = this.stripQuotes(value);
       }
@@ -184,6 +237,7 @@ export class MarkdownHtmlGenerator {
   ): { body: string; inline: Partial<FrontMatter> } {
     const lines = markdown.replaceAll("\r\n", "\n").split("\n");
     const inline: Partial<FrontMatter> = {
+      stylesheets: [],
       sidebarSections: new Set<string>(),
       theme: {},
       meta: {},
@@ -220,6 +274,12 @@ export class MarkdownHtmlGenerator {
         }
       } else if (key === "accent") {
         (inline.theme as Record<string, string>).accent = value;
+      } else if (
+        key === "icons" || key === "icon" || key === "fonts" ||
+        key === "font" || key === "stylesheet" || key === "stylesheets"
+      ) {
+        const values = this.parseInlineList(value);
+        (inline.stylesheets as string[]).push(...values);
       } else if (key.startsWith("theme-")) {
         const themeKey = this.slugify(key.slice(6));
         if (themeKey) {
@@ -277,6 +337,10 @@ export class MarkdownHtmlGenerator {
   private formatInline(text: string): string {
     const escaped = this.escapeHtml(text);
     return escaped
+      .replace(
+        /@icon\s+([a-zA-Z0-9_]+)/g,
+        '<span class="material-symbols-outlined">$1</span>',
+      )
       .replace(/\\\s*/g, "<br />")
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
@@ -498,6 +562,16 @@ export class MarkdownHtmlGenerator {
         this.regionAttr(token.attrs.region)
       }>${childHtml}</section>`;
     }
+    if (token.name === "presentation-block") {
+      return `<section${
+        this.blockClassAttr(["resume-presentation-block"], token.attrs)
+      }${this.regionAttr(token.attrs.region)}>${childHtml}</section>`;
+    }
+    if (token.name === "experience-cards") {
+      return `<section${
+        this.blockClassAttr(["resume-experience-cards"], token.attrs)
+      }${this.regionAttr(token.attrs.region)}>${childHtml}</section>`;
+    }
     if (token.name === "two-col") {
       return `<section${this.blockClassAttr(["resume-two-col"], token.attrs)}${
         this.regionAttr(token.attrs.region)
@@ -540,9 +614,15 @@ export class MarkdownHtmlGenerator {
         }>`,
       ];
       for (const item of items) {
-        out.push(
-          `<div class="resume-hobby-tag">${this.formatInline(item)}</div>`,
-        );
+        const [iconRaw, labelRaw] = item.includes("|")
+          ? item.split("|", 2).map((v) => v.trim())
+          : [item, ""];
+        const label = labelRaw || iconRaw;
+        const icon = labelRaw ? iconRaw : "";
+        out.push('<div class="resume-hobby-tag">');
+        if (icon) out.push(this.formatInline(icon));
+        out.push(this.formatInline(label));
+        out.push("</div>");
       }
       out.push("</div>");
       return out.join("\n");
@@ -728,6 +808,8 @@ export class MarkdownHtmlGenerator {
   private renderEntry(token: Extract<Token, { type: "directive" }>): string {
     let title = "";
     let meta = "";
+    let date = "";
+    let org = "";
     let links = "";
     let summaryLine = "";
     let image = "";
@@ -742,6 +824,10 @@ export class MarkdownHtmlGenerator {
         title = line.slice(4).trim();
       } else if (line.startsWith("@meta ")) {
         meta = line.slice(6).trim();
+      } else if (line.startsWith("@date ")) {
+        date = line.slice(6).trim();
+      } else if (line.startsWith("@org ")) {
+        org = line.slice(5).trim();
       } else if (line.startsWith("@stack ")) {
         const parts = line.slice(7).split(",");
         for (const part of parts) {
@@ -769,11 +855,18 @@ export class MarkdownHtmlGenerator {
     const region = this.regionAttr(token.attrs.region);
     const variant = this.slugify(token.attrs.variant ?? "");
     const isTimeline = variant === "timeline-card";
+    const iconName = token.attrs.icon?.trim() ?? "";
     const out = [`<article${attr}${region}>`];
 
     if (isTimeline) {
-      if (meta) {
-        out.push(this.renderTextElement("p", "resume-entry__meta", meta));
+      if (date || org || meta) {
+        out.push('<div class="resume-entry__meta">');
+        if (date) out.push(this.renderTextElement("p", "resume-entry__date", date));
+        if (org) out.push(this.renderTextElement("h3", "resume-entry__company", org));
+        if (meta && !date && !org) {
+          out.push(this.renderTextElement("p", "resume-entry__meta", meta));
+        }
+        out.push("</div>");
       }
       out.push('<div class="resume-entry__body">');
       if (title) {
@@ -790,6 +883,13 @@ export class MarkdownHtmlGenerator {
       }
       out.push("</div>");
     } else {
+      if (kind === "service" && iconName) {
+        out.push(
+          `<span class="material-symbols-outlined" aria-hidden="true">${
+            this.escapeHtml(iconName)
+          }</span>`,
+        );
+      }
       if (title) {
         out.push(this.renderTextElement("h3", "resume-entry__title", title));
       }
@@ -845,6 +945,10 @@ export class MarkdownHtmlGenerator {
     let pendingSubtitle: string | null = null;
 
     for (const token of section.tokens) {
+      if (token.type === "h1") {
+        out.push(`<h1>${this.formatInline(token.text)}</h1>`);
+        continue;
+      }
       if (token.type === "h3") {
         pendingSubtitle = token.text;
         continue;
@@ -908,6 +1012,10 @@ export class MarkdownHtmlGenerator {
     let pendingSubtitle: string | null = null;
 
     for (const token of tokens) {
+      if (token.type === "h1") {
+        out.push(`<h1>${this.formatInline(token.text)}</h1>`);
+        continue;
+      }
       if (token.type === "h3") {
         pendingSubtitle = token.text;
         continue;
@@ -1004,9 +1112,8 @@ export class MarkdownHtmlGenerator {
 
   private renderResume(markdown: string, frontMatter: FrontMatter): string {
     const tokens = this.tokenize(markdown);
-    const filtered = tokens.filter((t) => t.type !== "h1");
     return `<article class="resume">
-      ${this.renderTokensWithSections(filtered)}
+      ${this.renderTokensWithSections(tokens)}
     </article>`;
   }
 
@@ -1024,13 +1131,22 @@ export class MarkdownHtmlGenerator {
     content: string,
     style: string,
     title: string,
+    stylesheets: string[],
   ): string {
+    const links = stylesheets
+      .map((url) => url.trim())
+      .filter(Boolean)
+      .map((href) =>
+        `<link rel="stylesheet" href="${this.escapeHtml(href)}" />`
+      )
+      .join("\n            ");
     return `<!doctype html>
         <html lang="en">
           <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
             <title>${this.escapeHtml(title)}</title>
+            ${links}
             <style>${style}</style>
           </head>
           <body>
@@ -1051,6 +1167,10 @@ export class MarkdownHtmlGenerator {
       name: inline.name ?? frontMatter.name,
       title: inline.title ?? frontMatter.title,
       photo: inline.photo ?? frontMatter.photo,
+      stylesheets: [
+        ...(frontMatter.stylesheets ?? []),
+        ...(inline.stylesheets ?? []),
+      ],
       sidebarSections:
         (inline.sidebarSections && inline.sidebarSections.size > 0)
           ? inline.sidebarSections
@@ -1063,7 +1183,12 @@ export class MarkdownHtmlGenerator {
     const mergedCss = themeOverride ? `${themeOverride}\n${css}` : css;
     const documentTitle = merged.meta.document_title ??
       (merged.template === "resume" ? "Resume Poster CV" : "Resume");
-    return this.generateHtmlTemplate(content, mergedCss, documentTitle);
+    return this.generateHtmlTemplate(
+      content,
+      mergedCss,
+      documentTitle,
+      merged.stylesheets,
+    );
   }
 
   public async generateHtml(

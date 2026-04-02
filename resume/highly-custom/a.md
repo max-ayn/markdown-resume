@@ -1,23 +1,10 @@
 ---
 template: resume
-name: John Doe
-title: UX/UI Designer
-photo: ./assets/john-doe.png
-theme:
-  accent: "#d9c313"
-  paper: "#f3f3f1"
-  ink: "#111111"
-  muted: "#4b4b4b"
-  line: "#d6d1a8"
-regions:
-  header:
-    variant: hero
-  main:
-    variant: poster
+icons: https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200
 ---
 
-:::hero{variant=split-banner region=header}
-:::profile{variant=hero-left}
+:::hero{region=header}
+:::profile
 # John Doe
 
 :::lead
@@ -29,113 +16,121 @@ Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi pos
 :::
 :::
 
-:::image{variant=portrait region=header alt="Portrait of John Doe"}
-./assets/john-doe.png
-:::
-
-:::contact{variant=hero-right}
-- ☎ +12 3456 7890
-- 🐦 free@psdfreebies.com
-- 🌐 www.psdfreebies.com
-- 📍 123, Main Street, Your City, New York, USA 456789
+:::contact
+- @icon phone_enabled | +12 3456 7890
+- @icon mail | free@psdfreebies.com
+- @icon public | www.psdfreebies.com
+- @icon location_on | 123, Main Street, Your City,\ New York, USA 456789
 :::
 :::
 
+:::presentation-block
+:::col
 ## Who Am I?
 
-:::entry{kind=profile variant=intro}
+:::entry{kind=profile}
 @summary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus sunt veritatis totam velit, esse pariatur in minima nostrum harum dolorum perferendis quasi dolor autem deleniti inventore.
 :::
 
-:::icon-list{variant=tools}
-- Ps | 4/5
-- Ai | 4/5
-- Fl | 4/5
-- HTML5 | 4/5
+:::icon-list
+- Ps | ●●●●○
+- Ai | ●●●●○
+- ƒ | ●●●●○
+- 5 | ●●●●○
+:::
 :::
 
+:::col
 ## Expert In
 
-:::entry{kind=skills-intro variant=compact}
+:::entry{kind=skills-intro}
 @summary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus sunt veritatis totam.
 :::
 
-:::meter-list{variant=bars}
+:::meter-list
 - Graphic Design | 60
 - CSS | 90
 - JavaScript | 70
 - WordPress | 80
 :::
+:::
+:::
 
+:::experience-cards
+:::card-panel
 ## Education
 
-:::card-grid{variant=timeline}
+:::card-grid
 :::entry{kind=education variant=timeline-card}
-### Webmart
-@meta 2020 – 2022
-@summary UI/UX
-- Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
+@date 2020 - 2022
+@org Webmart
+### UI/UX
+@summary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
 :::
 
 :::entry{kind=education variant=timeline-card}
-### Iegbook
-@meta 2018 – 20
-@summary Web Designer
-- Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
+@date 2018 - 2020
+@org Iegbook
+### Web Designer
+@summary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
 :::
 
 :::entry{kind=education variant=timeline-card}
-### Myzone
-@meta 2015 – 18
-@summary Graphic Designer
-- Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
+@date 2015 - 2018
+@org Myzone
+### Graphic Designer
+@summary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
+:::
 :::
 :::
 
+:::card-panel
 ## Experience
 
-:::card-grid{variant=timeline}
+:::card-grid
 :::entry{kind=job variant=timeline-card}
-### Webmart
-@meta 2020 – 2022
-@summary UI/UX
-- Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
+@date 2020 - 2022
+@org Webmart
+### UI/UX
+@summary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
 :::
 
 :::entry{kind=job variant=timeline-card}
-### Iegbook
-@meta 2018 – 20
-@summary Web Designer
-- Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
+@date 2018 - 2020
+@org Iegbook
+### Web Designer
+@summary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
 :::
 
 :::entry{kind=job variant=timeline-card}
-### Myzone
-@meta 2015 – 18
-@summary Graphic Designer
-- Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
+@date 2015 - 2018
+@org Myzone
+### Graphic Designer
+@summary Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.
+:::
+:::
 :::
 :::
 
 ## What I Do
 
-:::service-grid{variant=four-up}
-:::entry{kind=service}
+:::service-grid
+:::entry{kind=service icon=screenshot_monitor}
 ### UX & UI
 @summary Lorem ipsum dolor sit amet, consectetur adipisicing elit.
 :::
 
-:::entry{kind=service}
+:::entry{kind=service icon=border_style}
 ### Visual Design
 @summary Lorem ipsum dolor sit amet, consectetur adipisicing elit.
 :::
 
-:::entry{kind=service}
+:::entry{kind=service icon=mobile_2}
 ### App Design
 @summary Lorem ipsum dolor sit amet, consectetur adipisicing elit.
 :::
 
-:::entry{kind=service}
+:::entry{kind=service icon=print}
 ### Print Design
 @summary Lorem ipsum dolor sit amet, consectetur adipisicing elit.
 :::
@@ -143,10 +138,10 @@ Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi pos
 
 ## Interests
 
-:::hobby-tags{variant=footer-tags}
-- Photography
-- Music
-- Football
-- Cycling
-- Reading
+:::hobby-tags
+- @icon photo_camera | Photography
+- @icon music_note_2 | Music
+- @icon sports_soccer | Football
+- @icon directions_bike | Cycling
+- @icon book_4 | Reading
 :::

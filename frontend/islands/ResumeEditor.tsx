@@ -17,6 +17,8 @@ type DiffTab = "markdown" | "css";
 interface ResumeEditorProps {
   initialMarkdown: string;
   initialCss: string;
+  initialMarkdownPath?: string;
+  initialCssPath?: string;
 }
 
 interface GeneratedDraft {
@@ -145,6 +147,7 @@ export default function ResumeEditor(props: ResumeEditorProps) {
   const [markdownText, setMarkdownText] = useState(props.initialMarkdown);
   const [cssText, setCssText] = useState(props.initialCss);
   const [previewHtml, setPreviewHtml] = useState<string>("");
+  const [overflowPx, setOverflowPx] = useState(0);
   const [previewError, setPreviewError] = useState<string>("");
   const [downloadError, setDownloadError] = useState<string>("");
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -158,6 +161,7 @@ export default function ResumeEditor(props: ResumeEditorProps) {
   const [usePreviewImage, setUsePreviewImage] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const previewFrameRef = useRef<HTMLIFrameElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const tabRef = useRef<Tab>("markdown");
   const previousTabRef = useRef<Tab>("markdown");
@@ -265,6 +269,8 @@ export default function ResumeEditor(props: ResumeEditorProps) {
           body: JSON.stringify({
             markdown: markdownText,
             css: cssText,
+            markdownPath: props.initialMarkdownPath ?? "",
+            cssPath: props.initialCssPath ?? "",
           }),
           signal: controller.signal,
         });
@@ -312,6 +318,8 @@ export default function ResumeEditor(props: ResumeEditorProps) {
         body: JSON.stringify({
           markdown: markdownText,
           css: cssText,
+          markdownPath: props.initialMarkdownPath ?? "",
+          cssPath: props.initialCssPath ?? "",
         }),
       }, PDF_TIMEOUT_MS);
 
@@ -358,6 +366,8 @@ export default function ResumeEditor(props: ResumeEditorProps) {
           instruction,
           markdown: markdownText,
           css: cssText,
+          markdownPath: props.initialMarkdownPath ?? "",
+          cssPath: props.initialCssPath ?? "",
           preset: "modern",
           includePreviewImage: usePreviewImage,
         }),
@@ -406,6 +416,28 @@ export default function ResumeEditor(props: ResumeEditorProps) {
     ? changedLineCount(markdownText, draft.markdown)
     : 0;
   const cssChanges = draft ? changedLineCount(cssText, draft.css) : 0;
+  const overflowMm = overflowPx * 25.4 / 96;
+
+  const updateOverflowIndicator = () => {
+    const frame = previewFrameRef.current;
+    if (!frame) return;
+    const doc = frame.contentDocument;
+    if (!doc) return;
+
+    const page = doc.querySelector(".page") as HTMLElement | null;
+    if (!page) {
+      setOverflowPx(0);
+      return;
+    }
+
+    const pageHeightPx = page.getBoundingClientRect().height;
+    const contentHeightPx = Math.max(
+      page.scrollHeight,
+      page.offsetHeight,
+      pageHeightPx,
+    );
+    setOverflowPx(Math.max(0, contentHeightPx - pageHeightPx));
+  };
 
   return (
     <>
@@ -436,7 +468,21 @@ export default function ResumeEditor(props: ResumeEditorProps) {
 
         <section class="preview-pane" aria-label="Live preview">
           <header class="preview-header">
-            <span>Preview</span>
+            <div class="preview-title-group">
+              <span>Preview</span>
+              <span
+                class={`overflow-indicator ${
+                  overflowPx > 0 ? "is-overflow" : "is-fit"
+                }`}
+                title={overflowPx > 0
+                  ? "Content exceeds one A4 page and will be auto-scaled on PDF export."
+                  : "Content currently fits in one A4 page."}
+              >
+                {overflowPx > 0
+                  ? `Overflow ${overflowMm.toFixed(1)}mm`
+                  : "Fits A4"}
+              </span>
+            </div>
             <button
               type="button"
               class="download-button"
@@ -455,6 +501,9 @@ export default function ResumeEditor(props: ResumeEditorProps) {
               <iframe
                 title="Resume preview"
                 class="preview-frame"
+                ref={previewFrameRef}
+                sandbox="allow-same-origin"
+                onLoad={updateOverflowIndicator}
                 srcDoc={previewHtml}
               />
             )}

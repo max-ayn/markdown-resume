@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resume Poster CV</title>
+  <style>
+    :root {
+      --accent: #d4c118;
+      --paper: #f2f2f0;
+      --ink: #111111;
+      --muted: #3f3f3f;
+      --line: rgba(0, 0, 0, 0.08);
+      --track: #d6d6d6;
+      --page-bg: #dcdcdc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--page-bg);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 4mm auto;
+      background: var(--paper);
+      box-shadow: 0 10px 30px rgb(0 0 0 / 12%);
+      overflow: hidden;
+    }
+
+    .resume {
+      display: block;
+    }
+
+    /* HERO */
+    .resume-hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.95fr 1.1fr;
+      min-height: 92mm;
+      padding: 10mm 11mm 0;
+      /* background: var(--accent); */
+      /* background: var(--accent); */
+      background-image: url("./assets/banner.jpg");
+      align-items: end;
+      position: relative;
+    }
+
+    .resume-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(to bottom,
+          rgb(255 255 255 / 8%) 0,
+          rgb(255 255 255 / 8%) 1px,
+          transparent 1px,
+          transparent 16mm);
+      pointer-events: none;
+    }
+
+    .resume-profile {
+      align-self: start;
+      padding-top: 5mm;
+      position: relative;
+      z-index: 1;
+    }
+
+    .resume-profile h1 {
+      margin: 0 0 2mm;
+      font-size: 11mm;
+      line-height: 0.95;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+    }
+
+    .resume-profile .resume-lead {
+      margin: 0 0 6mm;
+      font-size: 6.1mm;
+      line-height: 1;
+      font-weight: 300;
+      text-transform: uppercase;
+      color: #2c2c2c;
+    }
+
+    .resume-profile .resume-note {
+      max-width: 54mm;
+      margin: 0;
+      font-size: 4.15mm;
+      line-height: 1.23;
+    }
+
+    .resume-image {
+      display: flex;
+      justify-content: center;
+      align-items: end;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .resume-image img {
+      display: block;
+      max-width: 100%;
+      max-height: 84mm;
+      object-fit: contain;
+      filter: grayscale(100%) contrast(120%);
+    }
+
+    .resume-contact {
+      align-self: center;
+      padding-left: 8mm;
+      position: relative;
+      z-index: 1;
+    }
+
+    .resume-contact ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .resume-contact li {
+      display: flex;
+      align-items: flex-start;
+      gap: 3mm;
+      margin: 0 0 5mm;
+      font-size: 3.85mm;
+      line-height: 1.15;
+      font-weight: 700;
+    }
+
+    .resume-contact .icon {
+      width: 5mm;
+      display: inline-block;
+      text-align: center;
+    }
+
+    /* GENERIC SECTION */
+    .resume-section {
+      padding: 0 14mm;
+    }
+
+    .resume-section__title {
+      margin: 0 0 5mm;
+      font-size: 8.2mm;
+      line-height: 1;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.04em;
+    }
+
+    /* TWO COLUMN BLOCK */
+    .resume-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10mm;
+      padding: 10mm 14mm 0;
+    }
+
+    .resume-col .resume-section {
+      padding: 0;
+    }
+
+    .resume-entry__summary,
+    .resume-entry__highlights,
+    .resume-entry__highlights li {
+      font-size: 3.65mm;
+      line-height: 1.27;
+      color: #202020;
+    }
+
+    .resume-entry__summary {
+      margin: 0 0 5.5mm;
+    }
+
+    .resume-entry__highlights {
+      margin: 0;
+      padding-left: 4mm;
+    }
+
+    .resume-entry__highlights li {
+      margin: 0 0 1.8mm;
+    }
+
+    /* TOOL ICONS */
+    .resume-icon-list {
+      display: flex;
+      gap: 8mm;
+      flex-wrap: wrap;
+      margin-top: 6mm;
+    }
+
+    .resume-icon-item {
+      text-align: center;
+    }
+
+    .resume-icon-badge {
+      width: 16mm;
+      height: 16mm;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent);
+      font-size: 6.8mm;
+      font-weight: 500;
+    }
+
+    .resume-icon-rating {
+      margin-top: 2mm;
+      font-size: 3.4mm;
+      letter-spacing: 0.7mm;
+      white-space: nowrap;
+    }
+
+    /* METERS */
+    .resume-meter-list {
+      display: grid;
+      gap: 4mm;
+      margin-top: 4mm;
+    }
+
+    .resume-meter {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      row-gap: 1mm;
+      align-items: center;
+    }
+
+    .resume-meter__label {
+      font-size: 3.8mm;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .resume-meter__value {
+      font-size: 3.2mm;
+      line-height: 1;
+      font-weight: 800;
+      background: var(--accent);
+      padding: 0.7mm 1.5mm;
+    }
+
+    .resume-meter__track {
+      grid-column: 1 / -1;
+      height: 2mm;
+      background: var(--track);
+    }
+
+    .resume-meter__fill {
+      height: 100%;
+      background: #111;
+    }
+
+    /* YELLOW PANELS */
+    .resume-card-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8mm;
+      padding: 10mm 14mm 0;
+    }
+
+    .resume-card-panel {
+      background: var(--accent);
+      padding: 7mm 6mm 5mm;
+      min-height: 78mm;
+    }
+
+    .resume-card-panel .resume-section {
+      padding: 0;
+    }
+
+    .resume-card-panel .resume-section__title {
+      margin-bottom: 5mm;
+    }
+
+    .resume-card-grid {
+      display: grid;
+      gap: 0;
+    }
+
+    .resume-entry--timeline-card {
+      display: grid;
+      grid-template-columns: 22mm 1fr;
+      gap: 4mm;
+      padding: 4mm 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .resume-entry--timeline-card:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .resume-entry__meta {
+      margin: 0;
+      font-size: 3.6mm;
+      line-height: 1.12;
+      font-weight: 800;
+    }
+
+    .resume-entry__body {
+      min-width: 0;
+    }
+
+    .resume-entry__title {
+      margin: 0 0 0.8mm;
+      font-size: 5mm;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .resume-entry--timeline-card .resume-entry__summary {
+      margin: 0 0 1mm;
+      font-size: 4.15mm;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .resume-entry--timeline-card .resume-entry__highlights {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .resume-entry--timeline-card .resume-entry__highlights li {
+      margin: 0;
+      font-size: 3.15mm;
+      line-height: 1.18;
+    }
+
+    /* SERVICES */
+    .resume-section--services {
+      padding-top: 10mm;
+    }
+
+    .resume-section--services .resume-section__title,
+    .resume-section--interests .resume-section__title {
+      text-align: center;
+    }
+
+    .resume-service-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7mm;
+      padding: 0 14mm;
+    }
+
+    .resume-entry--service {
+      display: grid;
+      grid-template-columns: 11mm 1fr;
+      gap: 3mm;
+      align-items: start;
+    }
+
+    .resume-entry--service::before {
+      content: "";
+      display: block;
+      width: 11mm;
+      height: 11mm;
+      background: var(--accent);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    .resume-entry--service .resume-entry__title {
+      margin: 0 0 1mm;
+      font-size: 4.5mm;
+      line-height: 1;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .resume-entry--service .resume-entry__summary {
+      margin: 0;
+      font-size: 3.25mm;
+      line-height: 1.22;
+    }
+
+    /* HOBBIES */
+    .resume-section--interests {
+      padding-top: 10mm;
+      padding-bottom: 12mm;
+    }
+
+    .resume-hobby-tags {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4mm;
+      padding: 0 14mm;
+    }
+
+    .resume-hobby-tag {
+      min-height: 14mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      font-size: 3.7mm;
+      font-weight: 800;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    @media print {
+      @page {
+        size: A4;
+        margin: 0;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      .page {
+        margin: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <article class="resume">
+      <p>nisi possimus sunt veritatis totam velit. ::: :::</p>
+      <div class="resume-contact">
+        <ul>
+          <li><span class="icon">☎</span><span>+12 3456 7890</span></li>
+          <li><span class="icon">🐦</span><span>free@psdfreebies.com</span></li>
+          <li><span class="icon">🌐</span><span>www.psdfreebies.com</span></li>
+          <li><span class="icon">📍</span><span>123, Main Street, Your City,<br />New York, USA 456789 ::: :::</span>
+          </li>
+          <li><span class="icon">Ps</span><span>●●●●○</span></li>
+          <li><span class="icon">Ai</span><span>●●●●○</span></li>
+          <li><span class="icon">ƒ</span><span>●●●●○</span></li>
+          <li><span class="icon">5</span><span>●●●●○ ::: :::</span></li>
+          <li><span class="icon">Graphic Design</span><span>60</span></li>
+          <li><span class="icon">CSS</span><span>90</span></li>
+          <li><span class="icon">JavaScript</span><span>70</span></li>
+          <li><span class="icon">WordPress</span><span>80 ::: ::: :::</span></li>
+          <li><span class="icon">Lorem</span><span>ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint
+              nisi</span></li>
+          <li><span class="icon">Lorem</span><span>ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint
+              nisi</span></li>
+          <li><span class="icon">Lorem</span><span>ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint
+              nisi</span></li>
+          <li><span class="icon">Lorem</span><span>ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint
+              nisi</span></li>
+          <li><span class="icon">Lorem</span><span>ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint
+              nisi</span></li>
+          <li><span class="icon">Lorem</span><span>ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint
+              nisi</span></li>
+          <li><span>Photography</span></li>
+          <li><span>Music</span></li>
+          <li><span>Football</span></li>
+          <li><span>Cycling</span></li>
+          <li><span class="icon">Reading</span><span>:::</span></li>
+        </ul>
+      </div>
+    </article>
+  </main>
+</body>
+
+</html>

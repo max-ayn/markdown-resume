@@ -82,6 +82,56 @@ export class HtmlToPdfGenerator {
         );
       }
       await page.evaluate("document.fonts.ready");
+      const { contentHeightPx, a4HeightPx } = await page.evaluate<
+        { contentHeightPx: number; a4HeightPx: number },
+        void
+      >(() => {
+        const doc = (globalThis as unknown as {
+          document: {
+            querySelector(selector: string): {
+              scrollHeight: number;
+              offsetHeight: number;
+              getBoundingClientRect(): { height: number };
+            } | null;
+            documentElement: { scrollHeight: number };
+            body: {
+              scrollHeight: number;
+              appendChild(node: unknown): void;
+            };
+            createElement(tag: string): {
+              style: Record<string, string>;
+              getBoundingClientRect(): { height: number };
+              remove(): void;
+            };
+          };
+        }).document;
+        const pageEl = doc.querySelector(".page");
+        const contentHeightPx = pageEl
+          ? Math.max(
+            pageEl.scrollHeight,
+            pageEl.offsetHeight,
+            pageEl.getBoundingClientRect().height,
+          )
+          : Math.max(
+            doc.documentElement.scrollHeight,
+            doc.body.scrollHeight,
+          );
+
+        const probe = doc.createElement("div");
+        probe.style.position = "absolute";
+        probe.style.left = "-9999px";
+        probe.style.top = "0";
+        probe.style.height = "297mm";
+        probe.style.width = "1px";
+        doc.body.appendChild(probe);
+        const measuredHeight = probe.getBoundingClientRect().height;
+        probe.remove();
+        return { contentHeightPx, a4HeightPx: measuredHeight };
+      });
+      const scale = Math.min(
+        1,
+        Math.max(0.55, a4HeightPx / Math.max(contentHeightPx, 1)),
+      );
       await page.pdf({
         path: outputPath,
         format: "A4",
@@ -89,7 +139,7 @@ export class HtmlToPdfGenerator {
         preferCSSPageSize: true,
         margin: { top: "0", right: "0", bottom: "0", left: "0" },
         displayHeaderFooter: false,
-        scale: 1,
+        scale,
       });
     } finally {
       await browser.close();
