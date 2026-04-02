@@ -1,4 +1,4 @@
-import { dirname, fromFileUrl, join } from "@std/path";
+import { basename, dirname, fromFileUrl, join, resolve } from "@std/path";
 
 type FrontMatter = {
   template?: string;
@@ -24,7 +24,7 @@ type Token =
 type Section = {
   title: string;
   slug: string;
-  region: "main" | "sidebar" | string;
+  region?: string;
   tokens: Token[];
 };
 
@@ -34,10 +34,17 @@ type StyledValue = {
 };
 
 export class MarkdownHtmlGenerator {
-  private readonly defaultSidebar = new Set(["skills", "languages", "interests"]);
+  private readonly defaultSidebar = new Set([
+    "skills",
+    "languages",
+    "interests",
+  ]);
 
   private slugify(value: string): string {
-    return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
+      /(^-|-$)/g,
+      "",
+    );
   }
 
   private stripQuotes(value: string): string {
@@ -51,7 +58,9 @@ export class MarkdownHtmlGenerator {
     return trimmed;
   }
 
-  private parseFrontMatter(markdown: string): { body: string; frontMatter: FrontMatter } {
+  private parseFrontMatter(
+    markdown: string,
+  ): { body: string; frontMatter: FrontMatter } {
     const lines = markdown.replaceAll("\r\n", "\n").split("\n");
     if (lines.length > 0 && lines[0].charCodeAt(0) === 0xfeff) {
       lines[0] = lines[0].slice(1);
@@ -144,7 +153,9 @@ export class MarkdownHtmlGenerator {
             i = j - 1;
             break;
           }
-          const childMatch = child.trim().match(/^([a-zA-Z0-9_-]+)\s*:\s*(.+)$/);
+          const childMatch = child.trim().match(
+            /^([a-zA-Z0-9_-]+)\s*:\s*(.+)$/,
+          );
           if (!childMatch) continue;
           const themeKey = this.slugify(childMatch[1]);
           const themeValue = this.stripQuotes(childMatch[2]);
@@ -154,7 +165,8 @@ export class MarkdownHtmlGenerator {
       }
 
       if (
-        key !== "template" && key !== "name" && key !== "title" && key !== "photo" &&
+        key !== "template" && key !== "name" && key !== "title" &&
+        key !== "photo" &&
         key !== "sidebar_sections" && key !== "theme"
       ) {
         frontMatter.meta[key] = this.stripQuotes(value);
@@ -167,7 +179,9 @@ export class MarkdownHtmlGenerator {
     };
   }
 
-  private parseInlineGlobals(markdown: string): { body: string; inline: Partial<FrontMatter> } {
+  private parseInlineGlobals(
+    markdown: string,
+  ): { body: string; inline: Partial<FrontMatter> } {
     const lines = markdown.replaceAll("\r\n", "\n").split("\n");
     const inline: Partial<FrontMatter> = {
       sidebarSections: new Set<string>(),
@@ -208,7 +222,9 @@ export class MarkdownHtmlGenerator {
         (inline.theme as Record<string, string>).accent = value;
       } else if (key.startsWith("theme-")) {
         const themeKey = this.slugify(key.slice(6));
-        if (themeKey) (inline.theme as Record<string, string>)[themeKey] = value;
+        if (themeKey) {
+          (inline.theme as Record<string, string>)[themeKey] = value;
+        }
       } else {
         (inline.meta as Record<string, string>)[key] = value;
       }
@@ -242,14 +258,20 @@ export class MarkdownHtmlGenerator {
     };
   }
 
-  private renderTextElement(tag: string, className: string, rawText: string): string {
+  private renderTextElement(
+    tag: string,
+    className: string,
+    rawText: string,
+  ): string {
     const parsed = this.parseStyleMarker(rawText);
     const classList = [className];
     if (parsed.styleKey) {
       classList.push(`${className}--${parsed.styleKey}`);
     }
     const classAttr = classList.join(" ");
-    return `<${tag} class="${classAttr}">${this.formatInline(parsed.value)}</${tag}>`;
+    return `<${tag} class="${classAttr}">${
+      this.formatInline(parsed.value)
+    }</${tag}>`;
   }
 
   private formatInline(text: string): string {
@@ -259,14 +281,20 @@ export class MarkdownHtmlGenerator {
       .replace(/`([^`]+)`/g, "<code>$1</code>")
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/\*([^*]+)\*/g, "<em>$1</em>")
-      .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" rel="noopener noreferrer">$1</a>');
+      .replace(
+        /\[([^\]]+)\]\(([^)\s]+)\)/g,
+        '<a href="$2" rel="noopener noreferrer">$1</a>',
+      );
   }
 
   private parseDirectiveAttrs(raw: string): Record<string, string> {
     const attrs: Record<string, string> = {};
-    const matches = raw.matchAll(/([a-zA-Z0-9_-]+)\s*=\s*([^\s}]+)/g);
+    const matches = raw.matchAll(
+      /([a-zA-Z0-9_-]+)\s*=\s*("([^"]*)"|'([^']*)'|[^\s}]+)/g,
+    );
     for (const match of matches) {
-      attrs[match[1]] = this.stripQuotes(match[2]);
+      const value = match[3] ?? match[4] ?? match[2];
+      attrs[match[1]] = this.stripQuotes(value);
     }
     return attrs;
   }
@@ -305,18 +333,44 @@ export class MarkdownHtmlGenerator {
         continue;
       }
 
-      const directiveOpen = line.match(/^:::\s*([a-zA-Z0-9_-]+)(?:\{([^}]*)\})?\s*$/);
+      const directiveOpen = line.match(
+        /^:::\s*([a-zA-Z0-9_-]+)(?:\{([^}]*)\})?\s*$/,
+      );
       if (directiveOpen) {
         const name = directiveOpen[1].toLowerCase();
         const attrs = this.parseDirectiveAttrs(directiveOpen[2] ?? "");
         const blockLines: string[] = [];
+        let depth = 1;
         i += 1;
-        while (i < lines.length && lines[i].trim() !== ":::") {
+        while (i < lines.length && depth > 0) {
+          const current = lines[i].trim();
+          const nestedOpen = current.match(
+            /^:::\s*([a-zA-Z0-9_-]+)(?:\{([^}]*)\})?\s*$/,
+          );
+          if (nestedOpen) {
+            depth += 1;
+            blockLines.push(lines[i]);
+            i += 1;
+            continue;
+          }
+
+          if (current === ":::") {
+            depth -= 1;
+            if (depth > 0) blockLines.push(lines[i]);
+            i += 1;
+            continue;
+          }
+
           blockLines.push(lines[i]);
           i += 1;
         }
-        if (i < lines.length && lines[i].trim() === ":::") i += 1;
         tokens.push({ type: "directive", name, attrs, lines: blockLines });
+        continue;
+      }
+
+      // Ignore orphan directive closers to avoid stalling tokenization.
+      if (line === ":::") {
+        i += 1;
         continue;
       }
 
@@ -360,13 +414,21 @@ export class MarkdownHtmlGenerator {
       }
       if (para.length > 0) {
         tokens.push({ type: "paragraph", text: para.join(" ") });
+        continue;
       }
+
+      // Ensure forward progress for any unrecognized non-empty line.
+      i += 1;
     }
 
     return tokens;
   }
 
-  private renderList(items: string[], listClass?: string, itemClass?: string): string {
+  private renderList(
+    items: string[],
+    listClass?: string,
+    itemClass?: string,
+  ): string {
     const listAttr = listClass ? ` class="${listClass}"` : "";
     const out = [`<ul${listAttr}>`];
     for (const rawItem of items) {
@@ -374,7 +436,9 @@ export class MarkdownHtmlGenerator {
       const classes: string[] = [];
       if (itemClass) classes.push(itemClass);
       if (parsed.styleKey) classes.push(`resume-item--${parsed.styleKey}`);
-      const itemAttr = classes.length > 0 ? ` class="${classes.join(" ")}"` : "";
+      const itemAttr = classes.length > 0
+        ? ` class="${classes.join(" ")}"`
+        : "";
       out.push(`<li${itemAttr}>${this.formatInline(parsed.value)}</li>`);
     }
     out.push("</ul>");
@@ -390,7 +454,10 @@ export class MarkdownHtmlGenerator {
     return items;
   }
 
-  private renderGroupList(lines: string[], attrs: Record<string, string>): string {
+  private renderGroupList(
+    lines: string[],
+    attrs: Record<string, string>,
+  ): string {
     const classAttr = this.blockClassAttr(["resume-group-list"], attrs);
     const region = this.regionAttr(attrs.region);
     const items = this.parseItems(lines);
@@ -401,85 +468,261 @@ export class MarkdownHtmlGenerator {
         out.push(
           `<li class="resume-group-list__item"><span class="resume-group-list__label">${
             this.formatInline(match[1])
-          }:</span> <span class="resume-group-list__value">${this.formatInline(match[2])}</span></li>`,
+          }:</span> <span class="resume-group-list__value">${
+            this.formatInline(match[2])
+          }</span></li>`,
         );
       } else {
-        out.push(`<li class="resume-group-list__item">${this.formatInline(item)}</li>`);
+        out.push(
+          `<li class="resume-group-list__item">${this.formatInline(item)}</li>`,
+        );
       }
     }
     out.push("</ul>");
     return out.join("\n");
   }
 
-  private renderDirectiveBlock(token: Extract<Token, { type: "directive" }>): string {
+  private renderDirectiveBlock(
+    token: Extract<Token, { type: "directive" }>,
+  ): string {
     if (token.name === "entry") return this.renderEntry(token);
 
     const text = token.lines.map((v) => v.trim()).filter(Boolean).join(" ");
     const markdown = token.lines.join("\n");
     const items = this.parseItems(token.lines);
+    const childTokens = this.tokenize(markdown);
+    const childHtml = this.renderTokensWithSections(childTokens);
+
+    if (token.name === "hero") {
+      return `<section${this.blockClassAttr(["resume-hero"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${childHtml}</section>`;
+    }
+    if (token.name === "two-col") {
+      return `<section${this.blockClassAttr(["resume-two-col"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${childHtml}</section>`;
+    }
+    if (token.name === "col") {
+      return `<div${this.blockClassAttr(["resume-col"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${childHtml}</div>`;
+    }
+    if (token.name === "card-columns") {
+      return `<section${
+        this.blockClassAttr(["resume-card-columns"], token.attrs)
+      }${this.regionAttr(token.attrs.region)}>${childHtml}</section>`;
+    }
+    if (token.name === "card-panel") {
+      return `<div${this.blockClassAttr(["resume-card-panel"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${childHtml}</div>`;
+    }
+    if (token.name === "profile") {
+      return `<div${this.blockClassAttr(["resume-profile"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${childHtml}</div>`;
+    }
+    if (token.name === "card-grid") {
+      return `<div${this.blockClassAttr(["resume-card-grid"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${childHtml}</div>`;
+    }
+    if (token.name === "service-grid") {
+      return `<div${this.blockClassAttr(["resume-service-grid"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${childHtml}</div>`;
+    }
+    if (token.name === "hobby-tags") {
+      const out = [
+        `<div${this.blockClassAttr(["resume-hobby-tags"], token.attrs)}${
+          this.regionAttr(token.attrs.region)
+        }>`,
+      ];
+      for (const item of items) {
+        out.push(
+          `<div class="resume-hobby-tag">${this.formatInline(item)}</div>`,
+        );
+      }
+      out.push("</div>");
+      return out.join("\n");
+    }
+    if (token.name === "icon-list") {
+      const out = [
+        `<div${this.blockClassAttr(["resume-icon-list"], token.attrs)}${
+          this.regionAttr(token.attrs.region)
+        }>`,
+      ];
+      for (const item of items) {
+        const [labelRaw, ratingRaw] = item.split("|").map((v) => v.trim());
+        const label = labelRaw || item;
+        const rating = ratingRaw || "";
+        out.push('<div class="resume-icon-item">');
+        out.push(
+          `<div class="resume-icon-badge">${this.formatInline(label)}</div>`,
+        );
+        if (rating) {
+          out.push(
+            `<div class="resume-icon-rating">${
+              this.formatInline(rating)
+            }</div>`,
+          );
+        }
+        out.push("</div>");
+      }
+      out.push("</div>");
+      return out.join("\n");
+    }
+    if (token.name === "meter-list") {
+      const out = [
+        `<div${this.blockClassAttr(["resume-meter-list"], token.attrs)}${
+          this.regionAttr(token.attrs.region)
+        }>`,
+      ];
+      for (const item of items) {
+        const [labelRaw, valueRaw] = item.split("|").map((v) => v.trim());
+        const label = labelRaw || item;
+        const value = Math.max(
+          0,
+          Math.min(100, Number.parseInt(valueRaw ?? "0", 10) || 0),
+        );
+        out.push('<div class="resume-meter">');
+        out.push(
+          `<span class="resume-meter__label">${
+            this.formatInline(label)
+          }</span>`,
+        );
+        out.push(`<span class="resume-meter__value">${value}%</span>`);
+        out.push('<div class="resume-meter__track">');
+        out.push(
+          `<div class="resume-meter__fill" style="width:${value}%"></div>`,
+        );
+        out.push("</div>");
+        out.push("</div>");
+      }
+      out.push("</div>");
+      return out.join("\n");
+    }
 
     if (token.name === "lead") {
-      return `<p${this.blockClassAttr(["resume-lead"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
-        this.formatInline(text)
-      }</p>`;
+      return `<p${this.blockClassAttr(["resume-lead"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${this.formatInline(text)}</p>`;
     }
     if (token.name === "note") {
-      return `<p${this.blockClassAttr(["resume-note"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
-        this.formatInline(text)
-      }</p>`;
+      return `<p${this.blockClassAttr(["resume-note"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${this.formatInline(text)}</p>`;
     }
     if (token.name === "tags") {
-      return this.renderList(items, `resume-taglist${token.attrs.variant ? ` is-${this.slugify(token.attrs.variant)}` : ""}`, "resume-tag");
+      return this.renderList(
+        items,
+        `resume-taglist${
+          token.attrs.variant ? ` is-${this.slugify(token.attrs.variant)}` : ""
+        }`,
+        "resume-tag",
+      );
     }
     if (token.name === "fact-list") {
       const list = this.renderList(items);
-      return `<div${this.blockClassAttr(["resume-fact-list"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
-        list
-      }</div>`;
+      return `<div${this.blockClassAttr(["resume-fact-list"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${list}</div>`;
     }
-    if (token.name === "group-list") return this.renderGroupList(token.lines, token.attrs);
+    if (token.name === "group-list") {
+      return this.renderGroupList(token.lines, token.attrs);
+    }
     if (token.name === "image") {
       const src = token.lines.map((v) => v.trim()).find(Boolean) ?? "";
       const alt = token.attrs.alt?.trim() || "Image";
-      return `<figure${this.blockClassAttr(["resume-image"], token.attrs)}${this.regionAttr(token.attrs.region)}><img src="${
-        this.escapeHtml(src)
-      }" alt="${this.escapeHtml(alt)}" /></figure>`;
+      return `<figure${this.blockClassAttr(["resume-image"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }><img src="${this.escapeHtml(src)}" alt="${
+        this.escapeHtml(alt)
+      }" /></figure>`;
     }
     if (token.name === "header") {
-      return `<header${this.blockClassAttr(["resume-header"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
-        this.formatInline(text)
-      }</header>`;
+      return `<header${this.blockClassAttr(["resume-header"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${this.formatInline(text)}</header>`;
     }
     if (token.name === "footer") {
-      return `<footer${this.blockClassAttr(["resume-footer"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
-        this.formatInline(text)
-      }</footer>`;
+      return `<footer${this.blockClassAttr(["resume-footer"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${this.formatInline(text)}</footer>`;
     }
     if (token.name === "quote") {
-      return `<blockquote${this.blockClassAttr(["resume-quote"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
-        this.formatInline(text)
-      }</blockquote>`;
+      return `<blockquote${this.blockClassAttr(["resume-quote"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${this.formatInline(text)}</blockquote>`;
     }
     if (token.name === "callout") {
-      return `<aside${this.blockClassAttr(["resume-callout"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
-        this.formatInline(text)
-      }</aside>`;
+      return `<aside${this.blockClassAttr(["resume-callout"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${this.formatInline(text)}</aside>`;
     }
     if (token.name === "container") {
-      return `<div${this.blockClassAttr(["resume-container"], token.attrs)}${this.regionAttr(token.attrs.region)}>${
-        this.formatInline(text)
-      }</div>`;
+      return `<div${this.blockClassAttr(["resume-container"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${this.formatInline(text)}</div>`;
     }
     if (token.name === "divider") {
-      return `<hr${this.blockClassAttr(["resume-divider"], token.attrs)}${this.regionAttr(token.attrs.region)} />`;
+      return `<hr${this.blockClassAttr(["resume-divider"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      } />`;
     }
     if (token.name === "html") {
-      return `<div${this.blockClassAttr(["resume-html"], token.attrs)}${this.regionAttr(token.attrs.region)}>${markdown}</div>`;
+      return `<div${this.blockClassAttr(["resume-html"], token.attrs)}${
+        this.regionAttr(token.attrs.region)
+      }>${markdown}</div>`;
+    }
+    if (token.name === "contact") {
+      const out = [
+        `<div${this.blockClassAttr(["resume-contact"], token.attrs)}${
+          this.regionAttr(token.attrs.region)
+        }>`,
+        "<ul>",
+      ];
+      for (const item of items) {
+        const [iconPart, textPart] = item.includes("|")
+          ? item.split("|", 2).map((v) => v.trim())
+          : (() => {
+            const match = item.match(/^(\S+)\s+(.+)$/);
+            if (!match) return ["", item];
+            return [match[1], match[2]];
+          })();
+
+        if (iconPart) {
+          out.push(
+            `<li><span class="icon">${
+              this.formatInline(iconPart)
+            }</span><span>${this.formatInline(textPart || "")}</span></li>`,
+          );
+        } else {
+          out.push(
+            `<li><span>${this.formatInline(textPart || item)}</span></li>`,
+          );
+        }
+      }
+      out.push("</ul>");
+      out.push("</div>");
+      return out.join("\n");
     }
 
-    return `<div${this.blockClassAttr(["resume-custom", `resume-custom--${this.slugify(token.name)}`], token.attrs)}${
-      this.regionAttr(token.attrs.region)
-    }>${this.formatInline(text)}</div>`;
+    if (childHtml.trim().length > 0) {
+      return `<div${
+        this.blockClassAttr([
+          "resume-custom",
+          `resume-custom--${this.slugify(token.name)}`,
+        ], token.attrs)
+      }${this.regionAttr(token.attrs.region)}>${childHtml}</div>`;
+    }
+    return `<div${
+      this.blockClassAttr([
+        "resume-custom",
+        `resume-custom--${this.slugify(token.name)}`,
+      ], token.attrs)
+    }${this.regionAttr(token.attrs.region)}>${this.formatInline(text)}</div>`;
   }
 
   private renderEntry(token: Extract<Token, { type: "directive" }>): string {
@@ -519,33 +762,84 @@ export class MarkdownHtmlGenerator {
     }
 
     const kind = token.attrs.kind ? this.slugify(token.attrs.kind) : "generic";
-    const attr = this.blockClassAttr(["resume-entry", `resume-entry--${kind}`], token.attrs);
+    const attr = this.blockClassAttr(
+      ["resume-entry", `resume-entry--${kind}`],
+      token.attrs,
+    );
     const region = this.regionAttr(token.attrs.region);
+    const variant = this.slugify(token.attrs.variant ?? "");
+    const isTimeline = variant === "timeline-card";
     const out = [`<article${attr}${region}>`];
-    if (title) out.push(this.renderTextElement("h3", "resume-entry__title", title));
-    if (meta) out.push(this.renderTextElement("p", "resume-entry__meta", meta));
-    if (links) out.push(this.renderTextElement("p", "resume-entry__links", links));
-    if (image) {
-      out.push(
-        `<figure class="resume-entry__image"><img src="${this.escapeHtml(image)}" alt="Entry image" /></figure>`,
-      );
+
+    if (isTimeline) {
+      if (meta) {
+        out.push(this.renderTextElement("p", "resume-entry__meta", meta));
+      }
+      out.push('<div class="resume-entry__body">');
+      if (title) {
+        out.push(this.renderTextElement("h3", "resume-entry__title", title));
+      }
+      const mergedSummary = [summaryLine, ...summary].filter(Boolean).join(" ");
+      if (mergedSummary.length > 0) {
+        out.push(
+          this.renderTextElement("p", "resume-entry__summary", mergedSummary),
+        );
+      }
+      if (highlights.length > 0) {
+        out.push(this.renderList(highlights, "resume-entry__highlights"));
+      }
+      out.push("</div>");
+    } else {
+      if (title) {
+        out.push(this.renderTextElement("h3", "resume-entry__title", title));
+      }
+      if (meta) {
+        out.push(this.renderTextElement("p", "resume-entry__meta", meta));
+      }
+      if (links) {
+        out.push(this.renderTextElement("p", "resume-entry__links", links));
+      }
+      if (image) {
+        out.push(
+          `<figure class="resume-entry__image"><img src="${
+            this.escapeHtml(image)
+          }" alt="Entry image" /></figure>`,
+        );
+      }
+      const mergedSummary = [summaryLine, ...summary].filter(Boolean).join(" ");
+      if (mergedSummary.length > 0) {
+        out.push(
+          this.renderTextElement("p", "resume-entry__summary", mergedSummary),
+        );
+      }
+      if (stack.length > 0) {
+        out.push(this.renderList(stack, "resume-entry__stack"));
+      }
+      if (highlights.length > 0) {
+        out.push(this.renderList(highlights, "resume-entry__highlights"));
+      }
     }
-    const mergedSummary = [summaryLine, ...summary].filter(Boolean).join(" ");
-    if (mergedSummary.length > 0) {
-      out.push(this.renderTextElement("p", "resume-entry__summary", mergedSummary));
-    }
-    if (stack.length > 0) out.push(this.renderList(stack, "resume-entry__stack"));
-    if (highlights.length > 0) out.push(this.renderList(highlights, "resume-entry__highlights"));
     out.push("</article>");
     return out.join("\n");
   }
 
+  private sectionClassSlug(slug: string): string {
+    if (slug === "what-i-do") return "services";
+    return slug;
+  }
+
   private renderSection(section: Section): string {
+    const classSlug = this.sectionClassSlug(section.slug);
+    const region = section.region
+      ? ` data-region="${this.escapeHtml(section.region)}"`
+      : "";
     const out = [
-      `<section class="resume-section resume-section--${section.slug}" data-section="${this.escapeHtml(section.slug)}" data-region="${
-        this.escapeHtml(section.region)
-      }">`,
-      `<h2 class="resume-section__title">${this.formatInline(section.title)}</h2>`,
+      `<section class="resume-section resume-section--${classSlug}" data-section="${
+        this.escapeHtml(section.slug)
+      }"${region}>`,
+      `<h2 class="resume-section__title">${
+        this.formatInline(section.title)
+      }</h2>`,
     ];
 
     let pendingSubtitle: string | null = null;
@@ -558,7 +852,13 @@ export class MarkdownHtmlGenerator {
 
       if (token.type === "directive") {
         if (pendingSubtitle) {
-          out.push(this.renderTextElement("h3", "resume-section__subtitle", pendingSubtitle));
+          out.push(
+            this.renderTextElement(
+              "h3",
+              "resume-section__subtitle",
+              pendingSubtitle,
+            ),
+          );
           pendingSubtitle = null;
         }
         out.push(this.renderDirectiveBlock(token));
@@ -567,18 +867,30 @@ export class MarkdownHtmlGenerator {
 
       if (token.type === "paragraph") {
         if (pendingSubtitle) {
-          out.push(this.renderTextElement("h3", "resume-section__subtitle", pendingSubtitle));
+          out.push(
+            this.renderTextElement(
+              "h3",
+              "resume-section__subtitle",
+              pendingSubtitle,
+            ),
+          );
           pendingSubtitle = null;
         }
         const parsed = this.parseStyleMarker(token.text);
-        const classAttr = parsed.styleKey ? ` class="resume-block--${parsed.styleKey}"` : "";
+        const classAttr = parsed.styleKey
+          ? ` class="resume-block--${parsed.styleKey}"`
+          : "";
         out.push(`<p${classAttr}>${this.formatInline(parsed.value)}</p>`);
         continue;
       }
 
       if (token.type === "list") {
         if (pendingSubtitle) {
-          out.push(`<h3 class="resume-section__subtitle">${this.formatInline(pendingSubtitle)}</h3>`);
+          out.push(
+            `<h3 class="resume-section__subtitle">${
+              this.formatInline(pendingSubtitle)
+            }</h3>`,
+          );
           pendingSubtitle = null;
         }
         out.push(this.renderList(token.items));
@@ -603,18 +915,32 @@ export class MarkdownHtmlGenerator {
 
       if (token.type === "paragraph") {
         if (pendingSubtitle) {
-          out.push(this.renderTextElement("h3", "resume-section__subtitle", pendingSubtitle));
+          out.push(
+            this.renderTextElement(
+              "h3",
+              "resume-section__subtitle",
+              pendingSubtitle,
+            ),
+          );
           pendingSubtitle = null;
         }
         const parsed = this.parseStyleMarker(token.text);
-        const classAttr = parsed.styleKey ? ` class="resume-block--${parsed.styleKey}"` : "";
+        const classAttr = parsed.styleKey
+          ? ` class="resume-block--${parsed.styleKey}"`
+          : "";
         out.push(`<p${classAttr}>${this.formatInline(parsed.value)}</p>`);
         continue;
       }
 
       if (token.type === "list") {
         if (pendingSubtitle) {
-          out.push(this.renderTextElement("h3", "resume-section__subtitle", pendingSubtitle));
+          out.push(
+            this.renderTextElement(
+              "h3",
+              "resume-section__subtitle",
+              pendingSubtitle,
+            ),
+          );
           pendingSubtitle = null;
         }
         out.push(this.renderList(token.items));
@@ -623,7 +949,13 @@ export class MarkdownHtmlGenerator {
 
       if (token.type === "directive") {
         if (pendingSubtitle) {
-          out.push(this.renderTextElement("h3", "resume-section__subtitle", pendingSubtitle));
+          out.push(
+            this.renderTextElement(
+              "h3",
+              "resume-section__subtitle",
+              pendingSubtitle,
+            ),
+          );
           pendingSubtitle = null;
         }
         out.push(this.renderDirectiveBlock(token));
@@ -633,76 +965,49 @@ export class MarkdownHtmlGenerator {
     return out.join("\n");
   }
 
-  private renderResume(markdown: string, frontMatter: FrontMatter): string {
-    const tokens = this.tokenize(markdown);
+  private renderTokensWithSections(tokens: Token[]): string {
+    if (tokens.length === 0) return "";
+    const out: string[] = [];
+    let i = 0;
 
-    let name = frontMatter.name || "Resume";
-    let title = frontMatter.title || "";
-
-    const firstSection = tokens.findIndex((t) => t.type === "h2");
-    const headEnd = firstSection === -1 ? tokens.length : firstSection;
-
-    for (let i = 0; i < headEnd; i += 1) {
+    while (i < tokens.length) {
       const token = tokens[i];
-      if (token.type === "h1") name = token.text;
-    }
-
-    let contactItems: string[] = [];
-    const introTokens: Token[] = [];
-    for (let i = 0; i < headEnd; i += 1) {
-      const token = tokens[i];
-      if (token.type === "directive" && token.name === "contact") {
-        contactItems = this.parseItems(token.lines);
-        if (contactItems.length === 0) {
-          contactItems = token.lines.map((v) => v.trim()).filter(Boolean);
+      if (token.type === "h2") {
+        const slug = this.slugify(token.text);
+        const sectionTokens: Token[] = [];
+        i += 1;
+        while (i < tokens.length && tokens[i].type !== "h2") {
+          sectionTokens.push(tokens[i]);
+          i += 1;
         }
+        out.push(
+          this.renderSection({
+            title: token.text,
+            slug,
+            tokens: sectionTokens,
+          }),
+        );
         continue;
       }
 
-      if (token.type !== "h1") introTokens.push(token);
-    }
-
-    const sections: Section[] = [];
-    let current: Section | null = null;
-    for (let i = headEnd; i < tokens.length; i += 1) {
-      const token = tokens[i];
-      if (token.type === "h2") {
-        if (current) sections.push(current);
-        const slug = this.slugify(token.text);
-        const region = frontMatter.sidebarSections.has(slug) ? "sidebar" : "main";
-        current = { title: token.text, slug, region, tokens: [] };
-      } else if (current) {
-        current.tokens.push(token);
+      const loose: Token[] = [];
+      while (i < tokens.length && tokens[i].type !== "h2") {
+        loose.push(tokens[i]);
+        i += 1;
       }
+      const rendered = this.renderLooseTokens(loose);
+      if (rendered.trim().length > 0) out.push(rendered);
     }
-    if (current) sections.push(current);
 
-    const sidebar = sections.filter((s) => s.region === "sidebar");
-    const main = sections.filter((s) => s.region !== "sidebar");
+    return out.join("\n");
+  }
 
-    const photoHtml = frontMatter.photo
-      ? `<figure class="resume-photo"><img src="${this.escapeHtml(frontMatter.photo)}" alt="Profile photo" /></figure>`
-      : "";
-    const contactHtml = contactItems.length > 0
-      ? `<div class="resume-contact">${this.renderList(contactItems)}</div>`
-      : "";
-    const titleHtml = title ? this.renderTextElement("p", "resume-title", title) : "";
-
-    return `<section class="resume-layout">
-      <aside class="resume-sidebar">
-        ${photoHtml}
-        ${contactHtml}
-        ${sidebar.map((s) => this.renderSection(s)).join("\n")}
-      </aside>
-      <section class="resume-main">
-        <header class="resume-header">
-          <h1>${this.formatInline(name)}</h1>
-          ${titleHtml}
-        </header>
-        ${this.renderLooseTokens(introTokens)}
-        ${main.map((s) => this.renderSection(s)).join("\n")}
-      </section>
-    </section>`;
+  private renderResume(markdown: string, frontMatter: FrontMatter): string {
+    const tokens = this.tokenize(markdown);
+    const filtered = tokens.filter((t) => t.type !== "h1");
+    return `<article class="resume">
+      ${this.renderTokensWithSections(filtered)}
+    </article>`;
   }
 
   private buildThemeOverride(theme: Record<string, string>): string {
@@ -715,13 +1020,17 @@ export class MarkdownHtmlGenerator {
     return vars ? `:root {\n${vars}\n}` : "";
   }
 
-  private generateHtmlTemplate(content: string, style: string): string {
+  private generateHtmlTemplate(
+    content: string,
+    style: string,
+    title: string,
+  ): string {
     return `<!doctype html>
         <html lang="en">
           <head>
             <meta charset="utf-8" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>Resume</title>
+            <title>${this.escapeHtml(title)}</title>
             <style>${style}</style>
           </head>
           <body>
@@ -735,22 +1044,26 @@ export class MarkdownHtmlGenerator {
   public renderDocument(markdown: string, css: string): string {
     const { body: yamlBody, frontMatter } = this.parseFrontMatter(markdown);
     const { body, inline } = this.parseInlineGlobals(yamlBody);
+
     const merged: FrontMatter = {
       ...frontMatter,
       template: inline.template ?? frontMatter.template,
       name: inline.name ?? frontMatter.name,
       title: inline.title ?? frontMatter.title,
       photo: inline.photo ?? frontMatter.photo,
-      sidebarSections: (inline.sidebarSections && inline.sidebarSections.size > 0)
-        ? inline.sidebarSections
-        : frontMatter.sidebarSections,
+      sidebarSections:
+        (inline.sidebarSections && inline.sidebarSections.size > 0)
+          ? inline.sidebarSections
+          : frontMatter.sidebarSections,
       theme: { ...frontMatter.theme, ...(inline.theme ?? {}) },
       meta: { ...frontMatter.meta, ...(inline.meta ?? {}) },
     };
     const content = this.renderResume(body, merged);
     const themeOverride = this.buildThemeOverride(merged.theme);
     const mergedCss = themeOverride ? `${themeOverride}\n${css}` : css;
-    return this.generateHtmlTemplate(content, mergedCss);
+    const documentTitle = merged.meta.document_title ??
+      (merged.template === "resume" ? "Resume Poster CV" : "Resume");
+    return this.generateHtmlTemplate(content, mergedCss, documentTitle);
   }
 
   public async generateHtml(
@@ -762,7 +1075,90 @@ export class MarkdownHtmlGenerator {
     const css = await Deno.readTextFile(cssPath);
     await Deno.mkdir(dirname(outputPath), { recursive: true });
     const html = this.renderDocument(markdown, css);
-    await Deno.writeTextFile(outputPath, html);
+    const materialized = await this.materializeLocalImageAssets(
+      html,
+      markdownPath,
+      outputPath,
+    );
+    await Deno.writeTextFile(outputPath, materialized);
+  }
+
+  private isExternalOrAbsolutePath(path: string): boolean {
+    const value = path.trim();
+    return value.startsWith("/") || value.startsWith("http://") ||
+      value.startsWith("https://") || value.startsWith("data:") ||
+      value.startsWith("file:");
+  }
+
+  private async materializeLocalImageAssets(
+    html: string,
+    markdownPath: string,
+    outputPath: string,
+  ): Promise<string> {
+    const regex = /(<img[^>]*\ssrc=")([^"]+)(")/g;
+    const mdDir = dirname(markdownPath);
+    const outDir = dirname(outputPath);
+    const outAssetsDir = join(outDir, "assets");
+    const pathToName = new Map<string, string>();
+    const usedNames = new Set<string>();
+
+    let result = "";
+    let cursor = 0;
+
+    for (const match of html.matchAll(regex)) {
+      const full = match[0];
+      const prefix = match[1];
+      const src = match[2];
+      const suffix = match[3];
+      const index = match.index ?? 0;
+
+      result += html.slice(cursor, index);
+      cursor = index + full.length;
+
+      if (this.isExternalOrAbsolutePath(src)) {
+        result += full;
+        continue;
+      }
+
+      const sourcePath = resolve(mdDir, src);
+      try {
+        const stat = await Deno.stat(sourcePath);
+        if (!stat.isFile) {
+          result += full;
+          continue;
+        }
+      } catch {
+        result += full;
+        continue;
+      }
+
+      let assetName = pathToName.get(sourcePath);
+      if (!assetName) {
+        const originalName = basename(sourcePath);
+        assetName = originalName;
+        let counter = 2;
+        while (usedNames.has(assetName)) {
+          const dot = originalName.lastIndexOf(".");
+          if (dot === -1) {
+            assetName = `${originalName}-${counter}`;
+          } else {
+            assetName = `${originalName.slice(0, dot)}-${counter}${
+              originalName.slice(dot)
+            }`;
+          }
+          counter += 1;
+        }
+        usedNames.add(assetName);
+        pathToName.set(sourcePath, assetName);
+      }
+
+      await Deno.mkdir(outAssetsDir, { recursive: true });
+      await Deno.copyFile(sourcePath, join(outAssetsDir, assetName));
+      result += `${prefix}./assets/${this.escapeHtml(assetName)}${suffix}`;
+    }
+
+    result += html.slice(cursor);
+    return result;
   }
 }
 

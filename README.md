@@ -95,3 +95,5 @@ deno test --allow-read --allow-write --allow-env --allow-sys src/generate_pdf_te
 - Add a lot of templates
 - Use toon for IA
 - Add an option to download clean md
+
+- Automatic translation

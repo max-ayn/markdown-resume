@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { EditorView } from "@codemirror/view";
-import { Compartment, EditorState } from "@codemirror/state";
+import {
+  Decoration,
+  EditorView,
+  type ViewUpdate,
+  ViewPlugin,
+  WidgetType,
+} from "@codemirror/view";
+import { Compartment, EditorState, RangeSetBuilder } from "@codemirror/state";
 import { markdown } from "@codemirror/lang-markdown";
 import { css as cssLang } from "@codemirror/lang-css";
 import { basicSetup } from "codemirror";
@@ -27,6 +33,77 @@ const STORAGE_KEYS = {
 const PREVIEW_TIMEOUT_MS = 30_000;
 const PDF_TIMEOUT_MS = 45_000;
 const CHAT_TIMEOUT_MS = 90_000;
+const COLOR_CODE_REGEX =
+  /#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b|(?:rgb|hsl)a?\([^)\n]+\)/g;
+
+class ColorSwatchWidget extends WidgetType {
+  constructor(private readonly color: string) {
+    super();
+  }
+
+  override eq(other: ColorSwatchWidget): boolean {
+    return other.color === this.color;
+  }
+
+  override toDOM(): HTMLElement {
+    const swatch = document.createElement("span");
+    swatch.className = "cm-color-swatch";
+    swatch.style.backgroundColor = this.color;
+    swatch.title = this.color;
+    swatch.setAttribute("aria-hidden", "true");
+    return swatch;
+  }
+}
+
+function isSupportedColor(value: string): boolean {
+  return typeof CSS !== "undefined" && CSS.supports("color", value.trim());
+}
+
+function buildColorSwatchDecorations(view: EditorView) {
+  const builder = new RangeSetBuilder<Decoration>();
+
+  for (const { from, to } of view.visibleRanges) {
+    const text = view.state.doc.sliceString(from, to);
+    COLOR_CODE_REGEX.lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = COLOR_CODE_REGEX.exec(text)) !== null) {
+      const matchedColor = match[0];
+      if (!isSupportedColor(matchedColor)) continue;
+
+      const endPos = from + match.index + matchedColor.length;
+      builder.add(
+        endPos,
+        endPos,
+        Decoration.widget({
+          widget: new ColorSwatchWidget(matchedColor),
+          side: 1,
+        }),
+      );
+    }
+  }
+
+  return builder.finish();
+}
+
+const colorSwatchPlugin = ViewPlugin.fromClass(
+  class {
+    decorations;
+
+    constructor(view: EditorView) {
+      this.decorations = buildColorSwatchDecorations(view);
+    }
+
+    update(update: ViewUpdate) {
+      if (update.docChanged || update.viewportChanged) {
+        this.decorations = buildColorSwatchDecorations(update.view);
+      }
+    }
+  },
+  {
+    decorations: (instance) => instance.decorations,
+  },
+);
 
 async function fetchWithTimeout(
   input: RequestInfo | URL,
@@ -110,6 +187,7 @@ export default function ResumeEditor(props: ResumeEditorProps) {
       extensions: [
         basicSetup,
         EditorView.lineWrapping,
+        colorSwatchPlugin,
         languageCompartment.of(markdown()),
         EditorView.updateListener.of((update) => {
           if (!update.docChanged) return;
