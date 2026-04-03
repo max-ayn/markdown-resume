@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Kranky&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Kranky&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans+Meroitic&display=swap"
+    rel="stylesheet">
+
+
+  <link href="https://fonts.googleapis.com/css2?family=Playwrite+IE:wght@100..400&display=swap" rel="stylesheet">
+  <!-- <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=phone_enabled" /> -->
+  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" /> -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+  <title>Resume Poster CV</title>
+  <style>
+    :root {
+      --accent: #d4c118;
+      --paper: #f2f2f0;
+      --ink: #111111;
+      --muted: #3f3f3f;
+      --line: rgba(0, 0, 0, 0.08);
+      --track: #d6d6d6;
+      --page-bg: #dcdcdc;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--page-bg);
+      color: var(--ink);
+      /* font-family: Arial, Helvetica, sans-serif; */
+      font-family: 'Montserrat', sans-serif;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+
+    .material-symbols-outlined {
+      font-family: "Material Symbols Outlined";
+      line-height: 1;
+      display: inline-block;
+      font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    }
+
+    .icon-outline {
+      font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 24;
+    }
+
+    .resume-contact .material-symbols-outlined {
+      font-variation-settings: "FILL" 1, "wght" 600, "GRAD" 0, "opsz" 24;
+    }
+
+
+    /* .playwrite-ie-uniq {
+      font-family: "Playwrite IE", cursive;
+      font-optical-sizing: auto;
+      font-weight: <weight>;
+      font-style: normal;
+    } */
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 4mm auto;
+      background: var(--paper);
+      box-shadow: 0 10px 30px rgb(0 0 0 / 12%);
+      overflow: hidden;
+    }
+
+    .resume {
+      display: block;
+    }
+
+    /* HERO */
+    .resume-hero {
+      padding: 8mm;
+      display: flex;
+      justify-content: space-between;
+      /* display: grid; */
+      /* grid-template-columns: 1.15fr 0.95fr 1.1fr; */
+      min-height: 82mm;
+      /* padding: 10mm 11mm 0; */
+      background-image: url(./assets/banner.jpg);
+      background-size: contain;
+      background-repeat: no-repeat;
+      /* background: var(--accent); */
+      /* align-items: end; */
+      /* position: relative; */
+    }
+
+    /* .resume-hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(to bottom,
+          rgba(255, 255, 255, 0.08) 0,
+          rgba(255, 255, 255, 0.08) 1px,
+          transparent 1px,
+          transparent 16mm);
+      pointer-events: none;
+    } */
+
+    .resume-profile {
+      align-self: start;
+      padding-top: 5mm;
+      position: relative;
+      z-index: 1;
+    }
+
+    .resume-profile h1 {
+      margin: 0 0 2mm;
+      font-size: 11mm;
+      line-height: 0.95;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      text-transform: uppercase;
+    }
+
+    .resume-profile .resume-lead {
+      margin: 0 0 6mm;
+      font-size: 6.1mm;
+      line-height: 1;
+      margin: 0;
+      margin-bottom: 5mm;
+      font-weight: 300;
+      text-transform: uppercase;
+      color: #2c2c2c;
+    }
+
+    .resume-profile .resume-title {
+      margin: 0;
+      font-weight: 600;
+      font-size: 10mm;
+      text-transform: uppercase;
+    }
+
+    .resume-profile .resume-note {
+      font-size: 4.60mm;
+      font-weight: 350;
+      line-height: 6.2mm;
+      max-width: 54mm;
+      margin: 0;
+      font-size: 4.15mm;
+      line-height: 1.23;
+
+      font-family: "Montserrat", cursive;
+    }
+
+    /* 
+    .resume-image {
+      display: flex;
+      justify-content: center;
+      align-items: end;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .resume-image img {
+      display: block;
+      max-width: 100%;
+      max-height: 84mm;
+      object-fit: contain;
+      filter: grayscale(100%) contrast(120%);
+    } */
+
+    .resume-contact {
+      font-weight: 470;
+      align-self: center;
+      padding-left: 8mm;
+      position: relative;
+      z-index: 1;
+    }
+
+    .resume-contact ul {
+      display: flex;
+      flex-direction: column;
+      gap: 3.7mm;
+
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .resume-contact li {
+      display: flex;
+      align-items: center;
+      /* align-items: flex-start; */
+      gap: 3mm;
+      font-size: 3.85mm;
+      line-height: 1.15;
+    }
+
+    .resume-contact .icon {
+      width: 5mm;
+      display: inline-block;
+      text-align: center;
+    }
+
+    /* GENERIC SECTION */
+    .resume-section {
+      padding: 0 14mm;
+    }
+
+    .resume-section__title {
+      font-weight: 600;
+      font-size: 7.8mm;
+      margin: 0 0 5mm;
+      /* font-size: 8.2mm; */
+      line-height: 1;
+      /* font-weight: 900; */
+      text-transform: uppercase;
+      letter-spacing: -0.04em;
+    }
+
+    /* TWO COLUMN BLOCK */
+    .resume-presentation-block {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10mm;
+      padding: 8mm;
+    }
+
+    .resume-col .resume-section {
+      padding: 0;
+    }
+
+    .resume-entry__summary,
+    .resume-entry__highlights,
+    .resume-entry__highlights li {
+      font-size: 3.65mm;
+      line-height: 1.27;
+      color: #202020;
+    }
+
+    .resume-entry__summary {
+      margin: 0 0 5.5mm;
+    }
+
+    .resume-entry__highlights {
+      margin: 0;
+      padding-left: 4mm;
+    }
+
+    .resume-entry__highlights li {
+      margin: 0 0 1.8mm;
+    }
+
+    /* TOOL ICONS */
+    .resume-icon-list {
+      gap: 5mm;
+      display: flex;
+      justify-content: space-around;
+      /* display: flex; */
+      /* gap: 8mm; */
+      flex-wrap: wrap;
+      margin-top: 6mm;
+    }
+
+    .resume-icon-item {
+      text-align: center;
+    }
+
+    .resume-icon-badge {
+      width: 16mm;
+      height: 16mm;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent);
+      font-size: 6.8mm;
+      font-weight: 500;
+    }
+
+    .resume-icon-rating {
+      font-size: 5.2mm;
+      margin-top: 2mm;
+      /* font-size: 3.4mm; */
+      white-space: nowrap;
+    }
+
+    /* METERS */
+    .resume-meter-list {
+      display: grid;
+      gap: 3.2mm;
+      margin-top: 4mm;
+    }
+
+    .resume-meter {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      row-gap: 1mm;
+      align-items: center;
+    }
+
+    .resume-meter__label {
+      font-size: 3.8mm;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .resume-meter__value {
+      font-size: 3.2mm;
+      line-height: 1;
+      font-weight: 800;
+      background: var(--accent);
+      padding: 0.7mm 1.5mm;
+    }
+
+    .resume-meter__track {
+      grid-column: 1 / -1;
+      height: 2mm;
+      background: var(--track);
+    }
+
+    .resume-meter__fill {
+      height: 100%;
+      background: #111;
+    }
+
+    /* YELLOW PANELS */
+    .resume-experience-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5mm;
+      padding: 8mm;
+    }
+
+    .resume-card-panel {
+      background: var(--accent);
+      padding: 7mm 6mm 5mm;
+      min-height: 78mm;
+    }
+
+    .resume-card-panel .resume-section {
+      padding: 0;
+    }
+
+    .resume-card-panel .resume-section__title {
+      margin-bottom: 5mm;
+    }
+
+    .resume-card-grid {
+      display: grid;
+      gap: 0;
+    }
+
+    .resume-entry {
+      display: flex;
+      gap: 7mm;
+    }
+
+    .resume-section--education .resume-card-grid .resume-entry+.resume-entry {
+      border-top: 1px solid var(--line);
+      margin-top: 4mm;
+      padding-top: 4mm;
+    }
+
+    .resume-entry--timeline-card {
+      display: grid;
+      grid-template-columns: 22mm 1fr;
+      gap: 4mm;
+      padding: 4mm 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .resume-entry--timeline-card:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .resume-entry__meta {
+      display: flex;
+      flex-direction: column;
+      font-weight: 500;
+      font-size: 3.2mm;
+      margin: 0;
+    }
+
+    .resume-entry__body {
+      min-width: 0;
+    }
+
+
+
+    .resume-entry__body p {
+      margin: 0;
+      font-size: 2.6mm;
+      font-weight: 500;
+    }
+
+    .resume-entry__date {
+      white-space: nowrap;
+      margin: 0;
+    }
+
+    .resume-entry__company {
+      margin: 0;
+    }
+
+    .resume-entry__title {
+      margin: 0 0 0.8mm;
+      font-size: 5mm;
+      font-weight: 800;
+    }
+
+    .resume-entry--timeline-card .resume-entry__summary {
+      margin: 0 0 1mm;
+      font-size: 4.15mm;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .resume-entry--timeline-card .resume-entry__highlights {
+      padding-left: 0;
+      list-style: none;
+    }
+
+    .resume-entry--timeline-card .resume-entry__highlights li {
+      margin: 0;
+      font-size: 3.15mm;
+      line-height: 1.18;
+    }
+
+    /* SERVICES */
+    .resume-section--services .resume-section__title,
+    .resume-section--interests .resume-section__title {
+      text-align: center;
+    }
+
+    .resume-service-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7mm;
+    }
+
+    .resume-entry--service {
+      display: grid;
+      grid-template-columns: 11mm 1fr;
+      gap: 3mm;
+      align-items: start;
+    }
+
+    .resume-entry--service>.material-symbols-outlined {
+      width: 11mm;
+      height: 11mm;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      font-size: 6mm;
+      line-height: 1;
+      align-self: start;
+    }
+
+    .resume-entry--service .resume-entry__title {
+      font-weight: 500;
+      font-size: 4mm;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .resume-entry--service .resume-entry__summary {
+      margin: 0;
+      font-size: 2.75mm;
+      line-height: 1.22;
+    }
+
+    /* HOBBIES */
+    .resume-section--interests {
+      padding: 8mm;
+    }
+
+    .resume-hobby-tags {
+      display: flex;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4mm;
+    }
+
+    .resume-hobby-tag {
+      flex-grow: 1;
+      gap: 2mm;
+      min-height: 14mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      font-size: 2.7mm;
+      font-weight: 700;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    @media print {
+      @page {
+        size: A4;
+        margin: 0;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      .page {
+        margin: 0;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <article class="resume">
+      <section class="resume-hero" data-region="header">
+        <div class="resume-profile">
+          <p class="resume-title">John Doe</p>
+          <p class="resume-lead">UX/UI Designer</p>
+          <p class="resume-note">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus
+            sunt veritatis totam velit.</p>
+        </div>
+        <!-- <figure class="resume-image"><img src="./assets/john-doe.png" alt="Portrait of John Doe" /></figure> -->
+        <div class="resume-contact">
+          <ul>
+            <li>
+              <span class="material-symbols-outlined">
+                phone_enabled
+              </span>
+              <span>+12 3456 7890</span>
+            </li>
+            <li>
+              <span class="material-symbols-outlined">
+                mail
+              </span>
+              <span>free@psdfreebies.com</span>
+            </li>
+            <li>
+              <span class="material-symbols-outlined">
+                public
+              </span>
+              <span>www.psdfreebies.com</span>
+            </li>
+            <li>
+              <span class="material-symbols-outlined">
+                location_on
+              </span>
+              <span>123, Main Street, Your City,<br />New York, USA 456789</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+      <section class="resume-presentation-block">
+        <div class="resume-col">
+          <section class="resume-section resume-section--who-am-i" data-section="who-am-i">
+            <h2 class="resume-section__title">Who Am I?</h2>
+            <article class="resume-entry resume-entry--profile">
+              <p class="resume-entry__summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint
+                nisi possimus sunt veritatis totam velit, esse pariatur in minima nostrum harum dolorum perferendis
+                quasi dolor autem deleniti inventore.</p>
+            </article>
+            <div class="resume-icon-list">
+              <div class="resume-icon-item">
+                <div class="resume-icon-badge">Ps</div>
+                <div class="resume-icon-rating">●●●●○</div>
+              </div>
+              <div class="resume-icon-item">
+                <div class="resume-icon-badge">Ai</div>
+                <div class="resume-icon-rating">●●●●○</div>
+              </div>
+              <div class="resume-icon-item">
+                <div class="resume-icon-badge">ƒ</div>
+                <div class="resume-icon-rating">●●●●○</div>
+              </div>
+              <div class="resume-icon-item">
+                <div class="resume-icon-badge">5</div>
+                <div class="resume-icon-rating">●●●●○</div>
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="resume-col">
+          <section class="resume-section resume-section--expert-in" data-section="expert-in">
+            <h2 class="resume-section__title">Expert In</h2>
+            <article class="resume-entry resume-entry--skills-intro">
+              <p class="resume-entry__summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint
+                nisi possimus sunt veritatis totam.</p>
+            </article>
+            <div class="resume-meter-list">
+              <div class="resume-meter">
+                <span class="resume-meter__label">Graphic Design</span>
+                <span class="resume-meter__value">60%</span>
+                <div class="resume-meter__track">
+                  <div class="resume-meter__fill" style="width:60%"></div>
+                </div>
+              </div>
+              <div class="resume-meter">
+                <span class="resume-meter__label">CSS</span>
+                <span class="resume-meter__value">90%</span>
+                <div class="resume-meter__track">
+                  <div class="resume-meter__fill" style="width:90%"></div>
+                </div>
+              </div>
+              <div class="resume-meter">
+                <span class="resume-meter__label">JavaScript</span>
+                <span class="resume-meter__value">70%</span>
+                <div class="resume-meter__track">
+                  <div class="resume-meter__fill" style="width:70%"></div>
+                </div>
+              </div>
+              <div class="resume-meter">
+                <span class="resume-meter__label">WordPress</span>
+                <span class="resume-meter__value">80%</span>
+                <div class="resume-meter__track">
+                  <div class="resume-meter__fill" style="width:80%"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section class="resume-experience-cards">
+        <div class="resume-card-panel">
+          <section class="resume-section resume-section--education" data-section="education">
+            <h2 class="resume-section__title">Education</h2>
+            <div class="resume-card-grid">
+              <article class="resume-entry resume-entry--education is-timeline-card">
+                <div class="resume-entry__meta">
+                  <p class="resume-entry__date">2020 - 2022</p>
+                  <h3 class="resume-entry__company">Webmart</h3>
+                </div>
+                <div class="resume-entry__body">
+                  <h3 class="resume-entry__title">UI/UX</h3>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.</p>
+                </div>
+              </article>
+
+              <article class="resume-entry resume-entry--education is-timeline-card">
+                <div class="resume-entry__meta">
+                  <p class="resume-entry__date">2018 - 2020</p>
+                  <h3 class="resume-entry__company">Iegbook</h3>
+                </div>
+                <div class="resume-entry__body">
+                  <h3 class="resume-entry__title">Web Designer</h3>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.</p>
+                </div>
+              </article>
+
+              <article class="resume-entry resume-entry--education is-timeline-card">
+                <div class="resume-entry__meta">
+                  <p class="resume-entry__date">2015 - 2018</p>
+                  <h3 class="resume-entry__company">Myzone</h3>
+                </div>
+                <div class="resume-entry__body">
+                  <h3 class="resume-entry__title">Graphic Designer</h3>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+        <div class="resume-card-panel">
+          <section class="resume-section resume-section--education" data-section="education">
+            <h2 class="resume-section__title">Experience</h2>
+            <div class="resume-card-grid">
+              <article class="resume-entry resume-entry--education is-timeline-card">
+                <div class="resume-entry__meta">
+                  <p class="resume-entry__date">2020 - 2022</p>
+                  <h3 class="resume-entry__company">Webmart</h3>
+                </div>
+                <div class="resume-entry__body">
+                  <h3 class="resume-entry__title">UI/UX</h3>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.</p>
+                </div>
+              </article>
+
+              <article class="resume-entry resume-entry--education is-timeline-card">
+                <div class="resume-entry__meta">
+                  <p class="resume-entry__date">2018 - 2020</p>
+                  <h3 class="resume-entry__company">Iegbook</h3>
+                </div>
+                <div class="resume-entry__body">
+                  <h3 class="resume-entry__title">Web Designer</h3>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.</p>
+                </div>
+              </article>
+
+              <article class="resume-entry resume-entry--education is-timeline-card">
+                <div class="resume-entry__meta">
+                  <p class="resume-entry__date">2015 - 2018</p>
+                  <h3 class="resume-entry__company">Myzone</h3>
+                </div>
+                <div class="resume-entry__body">
+                  <h3 class="resume-entry__title">Graphic Designer</h3>
+                  <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Non vel, sint nisi possimus.</p>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="resume-section resume-section--services" data-section="what-i-do">
+        <h2 class="resume-section__title">What I Do</h2>
+        <div class="resume-service-grid">
+          <article class="resume-entry resume-entry--service">
+            <span class="material-symbols-outlined icon-outline" aria-hidden="true">screenshot_monitor</span>
+            <div>
+              <h3 class="resume-entry__title">UX &amp; UI</h3>
+              <p class="resume-entry__summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+            </div>
+          </article>
+          <article class="resume-entry resume-entry--service">
+            <span class="material-symbols-outlined">border_style</span>
+            <div>
+              <h3 class="resume-entry__title">Visual Design</h3>
+              <p class="resume-entry__summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+            </div>
+          </article>
+          <article class="resume-entry resume-entry--service">
+            <span class="material-symbols-outlined">mobile_2</span>
+            <div>
+              <h3 class="resume-entry__title">App Design</h3>
+              <p class="resume-entry__summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+            </div>
+          </article>
+          <article class="resume-entry resume-entry--service">
+            <span class="material-symbols-outlined">print</span>
+            <div>
+              <h3 class="resume-entry__title">Print Design</h3>
+              <p class="resume-entry__summary">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="resume-section resume-section--interests" data-section="interests">
+        <div class="resume-hobby-tags">
+          <div class="resume-hobby-tag"><span class="material-symbols-outlined">
+              photo_camera
+            </span>Photography</div>
+          <div class="resume-hobby-tag"><span class="material-symbols-outlined">
+              music_note_2
+            </span>Music</div>
+          <div class="resume-hobby-tag"><span class="material-symbols-outlined">
+              sports_soccer
+            </span>Football</div>
+          <div class="resume-hobby-tag"><span class="material-symbols-outlined">
+              directions_bike
+            </span>Cycling</div>
+          <div class="resume-hobby-tag"><span class="material-symbols-outlined">
+              book_4
+            </span>Reading</div>
+        </div>
+      </section>
+    </article>
+  </main>
+</body>
+
+</html>

@@ -1,17 +1,36 @@
-# Fresh project
+# Frontend App
 
-Your new Fresh project is ready to go. You can follow the Fresh "Getting
-Started" guide here: https://fresh.deno.dev/docs/getting-started
+Fresh app for:
+- Markdown/CSS resume editor
+- Live preview
+- PDF download
+- AI generation with diff-first apply flow
 
-### Usage
+## Setup
 
-Make sure to install Deno:
-https://docs.deno.com/runtime/getting_started/installation
+1. Create `.env` from `.env.example`:
 
-Then start the project in development mode:
-
+```bash
+cp .env.example .env
 ```
+
+2. Set `OPENAI_API_KEY` in `.env`.
+
+3. Install deps:
+
+```bash
+deno install
+deno run -A npm:playwright install chromium
+```
+
+4. Run dev server:
+
+```bash
 deno task dev
 ```
 
-This will watch the project directory and restart as necessary.
+## API routes
+
+- `POST /api/preview`
+- `POST /api/pdf`
+- `POST /api/chat/generate`

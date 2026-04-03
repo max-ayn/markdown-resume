@@ -84,3 +84,16 @@ deno test --allow-read --allow-write --allow-env --allow-sys src/generate_pdf_te
 
 - PDF generation requires Playwright runtime permissions (`--allow-env --allow-sys --allow-run`).
 - Output directories are created automatically.
+
+
+## ideas 
+
+- Use supabase for storage, as this is useful for storing image + databse + edge functions + cache: https://supabase.com/blog/fetching-and-caching-supabase-data-in-next-js-server-components
+- Do a diff over last 
+- Create MCP server for it to use with 
+
+- Add a lot of templates
+- Use toon for IA
+- Add an option to download clean md
+
+- Automatic translation

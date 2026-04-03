@@ -39,7 +39,7 @@ Deno.test("parses headings, paragraphs, and bullet lists in sequence", async () 
     assertStringIncludes(html, "<ul>");
     assertStringIncludes(html, "<li>item one</li>");
     assertStringIncludes(html, "<li>item two</li>");
-    assertStringIncludes(html, "<h2>Next</h2>");
+    assertStringIncludes(html, '<h2 class="resume-section__title">Next</h2>');
   });
 });
 
@@ -67,5 +67,185 @@ Deno.test("creates output directory when it does not exist", async () => {
     const output = join(dir, "nested", "deep", "resume.html");
     const html = await render("Simple paragraph", output);
     assertStringIncludes(html, "<p>Simple paragraph</p>");
+  });
+});
+
+Deno.test("supports sidebar_sections layout option via front matter", async () => {
+  await withTempDir(async (dir) => {
+    const output = join(dir, "out", "resume.html");
+    const html = await render(
+      `---
+sidebar_sections:
+  - projects
+---
+# Jane Doe
+
+City, Country
+
+## Summary
+Profile text.
+
+## Projects
+- Demo project
+
+## Skills
+- TypeScript
+`,
+      output,
+    );
+
+    assertMatch(
+      html,
+      /<aside class="resume-sidebar">[\s\S]*resume-section--projects[\s\S]*<\/aside>/,
+    );
+    assertMatch(
+      html,
+      /<section class="resume-main">[\s\S]*resume-section--summary[\s\S]*<\/section>/,
+    );
+  });
+});
+
+Deno.test("parses sidebar_sections front matter with leading blanks and spaced fences", async () => {
+  await withTempDir(async (dir) => {
+    const output = join(dir, "out", "resume.html");
+    const html = await render(
+      `
+  ---
+sidebar_sections: [projects, skills]
+  ---
+
+# Jane Doe
+
+City, Country
+
+## Summary
+Profile text.
+
+## Projects
+- Demo project
+
+## Experience
+- Work item
+
+## Education
+- School
+
+## Languages
+- English
+
+## Interests
+- Music
+`,
+      output,
+    );
+
+    assertMatch(
+      html,
+      /<aside class="resume-sidebar">[\s\S]*resume-section--projects[\s\S]*<\/aside>/,
+    );
+  });
+});
+
+Deno.test("supports style markers like [title] for targeted css hooks", async () => {
+  await withTempDir(async (dir) => {
+    const output = join(dir, "out", "resume.html");
+    const html = await render(
+      `# Jane Doe
+
+## Summary
+[hero] Profile text.
+
+## Skills
+- [core] TypeScript
+- [secondary] Python
+
+## Experience
+:::entry{kind=job}
+### [featured] Software Engineer
+@meta [muted] 2024 - Present
+- [impact] Built X
+:::
+`,
+      output,
+    );
+
+    assertStringIncludes(html, 'class="resume-block--hero"');
+    assertStringIncludes(html, 'class="resume-item--core"');
+    assertStringIncludes(html, 'class="resume-item--secondary"');
+    assertStringIncludes(html, 'class="resume-entry__title resume-entry__title--featured"');
+    assertStringIncludes(html, 'class="resume-entry__meta resume-entry__meta--muted"');
+    assertStringIncludes(html, 'class="resume-item--impact"');
+  });
+});
+
+Deno.test("supports inline mode directives before first heading", async () => {
+  await withTempDir(async (dir) => {
+    const output = join(dir, "out", "resume.html");
+    const html = await render(
+      `@name Jane Doe
+@title Staff Engineer
+@photo ./assets/jane.png
+@sidebar projects, skills
+@theme-accent #123456
+
+# Jane Doe
+
+:::contact
+- jane@example.com
+:::
+
+## Summary
+:::lead
+Builder of reliable systems.
+:::
+
+## Projects
+- Internal platform
+
+## Experience
+- Company A
+`,
+      output,
+    );
+
+    assertStringIncludes(html, '<figure class="resume-photo"><img src="./assets/jane.png" alt="Profile photo" /></figure>');
+    assertMatch(
+      html,
+      /<aside class="resume-sidebar">[\s\S]*resume-section--projects[\s\S]*<\/aside>/,
+    );
+    assertStringIncludes(html, "--accent: #123456;");
+  });
+});
+
+Deno.test("renders custom and extended built-in blocks with variant/class hooks", async () => {
+  await withTempDir(async (dir) => {
+    const output = join(dir, "out", "resume.html");
+    const html = await render(
+      `# Jane Doe
+
+## Summary
+:::quote{variant=featured class=testimonial}
+Strong ownership and delivery mindset.
+:::
+
+:::group-list
+- **Languages:** TypeScript, Python
+:::
+
+:::image{variant=avatar class=profile-pic alt="Profile"}
+./assets/jane.png
+:::
+
+:::hero{variant=featured class=hero-box}
+Custom semantic block
+:::
+`,
+      output,
+    );
+
+    assertStringIncludes(html, 'class="resume-quote is-featured testimonial"');
+    assertStringIncludes(html, 'class="resume-group-list"');
+    assertStringIncludes(html, 'class="resume-image is-avatar profile-pic"');
+    assertStringIncludes(html, 'class="resume-custom resume-custom--hero is-featured hero-box"');
   });
 });

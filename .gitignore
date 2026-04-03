@@ -1,6 +1,9 @@
 out
-resume
+# resume
 
 EXAMPLES.md
 
 .DS_Store
+
+node_modules
+research

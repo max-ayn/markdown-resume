@@ -61,3 +61,64 @@ Deliverable:
 - [ ] Tests pass in CI/local
 - [ ] README usage stays up to date
 - [ ] No manual post-edit needed after generation
+
+Plug docling so that i can convert a resume direclty
+
+
+
+1. Which LLM provider/model should I wire first (OpenAI API, Anthropic, local, other)?
+Give me an opinion about the best to use
+
+
+2. Do you want me to implement this in frontend only for now, or split now into frontend + backend?
+Tell me pros and cons of both methods
+
+Where should secrets live (frontend/.env, root .env, other)?
+
+3. Should chat support:
+generate from scratch - yes
+edit existing markdown/css - yes
+
+
+Do you want strict output format as JSON:
+{ markdown: string, css: string, notes?: string }?
+
+Should the assistant be allowed to change both markdown and css by default - yes
+
+What required resume sections must always exist (exact list/order)?
+Should generated CSS be constrained to your semantic classes only (.resume-layout, .resume-main, .resume-sidebar, .resume-section--*)?
+
+
+Do you want a style preset system (e.g. minimal, modern, executive)? -> Yes , modern one
+
+Chat UX: sidebar panel, modal, or full-width section? -? 
+I want an float chat that i can reduce an open using a button
+
+
+Should “Apply” overwrite current editor content immediately, or show diff/preview before apply?
+show the diff first
+
+
+Should we persist chat history locally, server-side, or not at all? -> no need atm
+
+Any guardrails you want (max prompt length, forbidden content, rate limit)? -> rate limit, max 10 atm
+
+Do you want streaming responses in the UI now, or simple non-streaming first? start with non streaming
+
+Should we log prompts/responses for debugging? yes
+
+Is this single-user local tool, or multi-user/authenticated app? -> ATM single user
+
+Should generated content stay English only or support multiple languages? -> Keep english ATM
+
+Should I include tests now (API + parsing + UI flow), or ship MVP first then test pass? -> Ship fast
+
+What is your preferred implementation priority:
+fastest MVP
+
+
+Can i apply a context to expect a certain result / use an agent ?
+
+
+--- Lets see ---
+Do you want revision history (undo/restore generated versions)?

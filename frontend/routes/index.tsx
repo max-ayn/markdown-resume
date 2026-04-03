@@ -1,24 +1,44 @@
 import { Head } from "fresh/runtime";
+import { fromFileUrl, resolve } from "@std/path";
 import { define } from "../utils.ts";
 import ResumeEditor from "../islands/ResumeEditor.tsx";
 
-async function readFirst(paths: string[]): Promise<string> {
-  for (const path of paths) {
+const FRONTEND_ROOT = resolve(fromFileUrl(new URL("../", import.meta.url)));
+
+type ResolvedFile = {
+  content: string;
+  path: string;
+};
+
+async function readFirst(paths: string[]): Promise<ResolvedFile> {
+  for (const candidate of paths) {
+    const path = resolve(FRONTEND_ROOT, candidate);
     try {
-      return await Deno.readTextFile(path);
+      return { content: await Deno.readTextFile(path), path };
     } catch {
       // Try next path.
     }
   }
 
-  return "";
+  return { content: "", path: "" };
 }
 
 export default define.page(async function Home() {
-  const [markdown, css] = await Promise.all([
-    readFirst(["../resume/resume.md", "../resume/CV.md", "../resume.md"]),
-    readFirst(["../resume/styles.css", "../styles.css"]),
+  const [markdownFile, cssFile] = await Promise.all([
+    readFirst([
+      "../resume/highly-custom/a.md",
+      "../resume/resume.md",
+      "../resume/CV.md",
+      "../resume.md",
+    ]),
+    readFirst([
+      "../resume/highly-custom/q.css",
+      "../resume/styles.css",
+      "../styles.css",
+    ]),
   ]);
+  const markdown = markdownFile.content;
+  const css = cssFile.content;
 
   return (
     <>
@@ -26,7 +46,12 @@ export default define.page(async function Home() {
         <title>Resume Editor</title>
       </Head>
       <main class="app-shell">
-        <ResumeEditor initialMarkdown={markdown} initialCss={css} />
+        <ResumeEditor
+          initialMarkdown={markdown}
+          initialCss={css}
+          initialMarkdownPath={markdownFile.path}
+          initialCssPath={cssFile.path}
+        />
       </main>
     </>
   );

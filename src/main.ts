@@ -3,14 +3,24 @@ import { MarkdownHtmlGenerator } from "./generate_html.ts";
 import { HtmlToPdfGenerator } from "./generate_pdf.ts";
 
 const ROOT = dirname(dirname(fromFileUrl(import.meta.url)));
-const inputMarkdown = join(ROOT, "resume", "resume.md");
-const inputCss = join(ROOT, "resume", "styles.css");
-const outputHtml = join(ROOT, "out", "resume.html");
-const outputPdf = join(ROOT, "out", "resume.pdf");
+const defaultInputMarkdown = join(ROOT, "resume", "resume.md");
+const defaultInputCss = join(ROOT, "resume", "styles.css");
+const defaultOutputHtml = join(ROOT, "out", "resume.html");
+const defaultOutputPdf = join(ROOT, "out", "resume.pdf");
+
+function readArgValue(args: string[], flag: string): string | null {
+  const index = args.indexOf(flag);
+  if (index === -1) return null;
+  return args[index + 1] ?? null;
+}
 
 /** Generates resume HTML and optionally a PDF via --pdf. */
 export async function run(args: string[] = Deno.args): Promise<void> {
   const wantsPdf = args.includes("--pdf");
+  const inputMarkdown = readArgValue(args, "--md") ?? defaultInputMarkdown;
+  const inputCss = readArgValue(args, "--css") ?? defaultInputCss;
+  const outputHtml = readArgValue(args, "--out") ?? defaultOutputHtml;
+  const outputPdf = readArgValue(args, "--pdf-out") ?? defaultOutputPdf;
 
   const htmlGenerator = new MarkdownHtmlGenerator();
   await htmlGenerator.generateHtml(inputMarkdown, inputCss, outputHtml);
