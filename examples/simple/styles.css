@@ -1,0 +1,189 @@
+:root {
+  --page-bg: #f6f7fb;
+  --paper: #ffffff;
+  --ink: #1c2435;
+  --muted: #5f6f8f;
+  --accent: #2f4fd6;
+  --line: #d8e0f0;
+  --link: #2f4fd6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 6mm auto;
+  background: var(--paper);
+  box-shadow: 0 14px 38px rgb(0 0 0 / 45%);
+}
+
+.resume {
+  padding: 12mm 10mm 12mm;
+}
+
+.resume a {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 0.5px;
+  text-underline-offset: 2px;
+}
+
+.resume-region--header {
+  margin-bottom: 6mm;
+}
+
+.resume-title {
+  margin: 0;
+  color: var(--accent);
+  font-size: 11mm;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.resume-region--main {
+  font-size: 3.9mm;
+  line-height: 1.34;
+}
+
+.resume-line {
+  margin: 0 0 1.6mm;
+}
+
+.resume-line:first-child {
+  margin-top: 0.8mm;
+  font-size: 4.15mm;
+}
+
+.resume-line strong {
+  color: #121a2d;
+  font-weight: 700;
+}
+
+.resume-line em {
+  color: var(--muted);
+}
+
+.resume-section {
+  margin: 0;
+  padding-top: 0;
+}
+
+.resume-section + .resume-section {
+  margin-top: 0;
+}
+
+.resume-section__title {
+  margin: 0 0 2mm;
+  color: var(--accent);
+  font-size: 4.3mm;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  break-after: avoid-page;
+  page-break-after: avoid;
+}
+
+.resume-section__line {
+  margin: 0 0 1.2mm;
+}
+
+.resume-section__line strong {
+  color: #121a2d;
+  font-weight: 700;
+}
+
+.resume-section__line em {
+  color: var(--muted);
+}
+
+.resume-section__line:last-child {
+  margin-bottom: 0;
+}
+
+.resume-separator {
+  margin: 2.6mm 0 3mm;
+  border: 0;
+  border-top: 1px solid var(--line);
+  break-after: avoid-page;
+  page-break-after: avoid;
+}
+
+/* Paragraph behavior */
+.resume-line,
+.resume-section__line {
+  white-space: normal;
+}
+
+.resume-line:where(:is(:not(:empty))),
+.resume-section__line:where(:is(:not(:empty))) {
+  word-break: normal;
+}
+
+.resume-region--sidebar,
+.resume-region--footer {
+  display: none;
+}
+
+@media screen and (max-width: 900px) {
+  .page {
+    width: 100%;
+    min-height: auto;
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .resume {
+    padding: 7mm 5mm;
+  }
+
+  .resume-title {
+    font-size: 8.5mm;
+  }
+
+  .resume-region--main {
+    font-size: 3.8mm;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 10mm 16mm 10mm;
+  }
+  
+  body {
+    background: #fff;
+  }
+  
+  .page {
+    margin: 0;
+    box-shadow: none;
+  }
+
+  .resume {
+    padding: 0;
+  }
+
+  .resume-section__line {
+    orphans: 3;
+    widows: 3;
+  }
+}

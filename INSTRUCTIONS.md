@@ -12,7 +12,7 @@ Build a complete resume toolchain: markdown content, polished one-page design, l
 
 ## Timeline
 
-### Week 1: Stabilize Core Resume Generation
+### Stabilize Core Resume Generation
 - [x] Finalize `resume.md` content structure
 - [x] Finalize `styles.css` for one-page A4 output
 - [x] Ensure `src/main.ts` generates HTML and optional PDF
@@ -21,7 +21,7 @@ Build a complete resume toolchain: markdown content, polished one-page design, l
 Deliverable:
 - Reliable local generation: `deno task build` and `deno task build:pdf`
 
-### Week 2: Visualization Tool (Editor + Preview)
+### Visualization Tool (Editor + Preview)
 - [ ] Create local UI with:
   - Markdown editor pane
   - Live HTML preview pane
@@ -32,7 +32,7 @@ Deliverable:
 Deliverable:
 - Browser-based authoring workflow for fast resume editing
 
-### Week 3: Generation API Endpoint
+### Generation API Endpoint
 - [ ] Implement HTTP endpoint(s):
   - `POST /generate/html`
   - `POST /generate/pdf`
@@ -43,7 +43,7 @@ Deliverable:
 Deliverable:
 - API-ready generation service for integration with UI or external clients
 
-### Week 4: AI CV Assistant
+### AI CV Assistant
 - [ ] Add chat interface for CV improvement suggestions
 - [ ] Add prompt templates for:
   - Professional summary rewrite

@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "dev": "deno run --watch cli.ts",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-sys cli.test.ts"
+  },
+  "imports": {
+    "@core": "../core/src/index.ts",
+
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/path": "jsr:@std/path@^1.1.4",
+    "playwright": "npm:playwright@^1.58.2"
+  },
+  "nodeModulesDir": "auto"
+}

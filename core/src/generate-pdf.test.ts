@@ -3,7 +3,7 @@ import {
   assertRejects,
 } from "@std/assert";
 import { join } from "@std/path";
-import { HtmlToPdfGenerator } from "./generate_pdf.ts";
+import { HtmlToPdfGenerator } from "./generate-pdf.ts";
 
 async function withTempDir(fn: (dir: string) => Promise<void>) {
   const dir = await Deno.makeTempDir();
@@ -17,16 +17,21 @@ async function withTempDir(fn: (dir: string) => Promise<void>) {
 function createMockGenerator(params: {
   throwOnPdf?: boolean;
   onPdfPath?: (path: string) => Promise<void> | void;
+  measuredHeights?: { contentHeightPx: number; a4HeightPx: number };
 }) {
   const calls = {
     closeCount: 0,
     evaluateArgs: [] as unknown[],
     setContentHtml: "",
     pdfPath: "",
+    pdfScale: 0,
   };
 
   const page = {
     async emulateMedia() {
+      // no-op
+    },
+    async goto() {
       // no-op
     },
     async setContent(html: string) {
@@ -34,10 +39,14 @@ function createMockGenerator(params: {
     },
     async evaluate(arg: unknown) {
       calls.evaluateArgs.push(arg);
+      if (typeof arg === "function") {
+        return params.measuredHeights ?? { contentHeightPx: 1123, a4HeightPx: 1123 };
+      }
       return undefined;
     },
-    async pdf(options: { path: string }) {
+    async pdf(options: { path: string; scale: number }) {
       calls.pdfPath = options.path;
+      calls.pdfScale = options.scale;
       if (params.onPdfPath) {
         await params.onPdfPath(options.path);
       }
@@ -121,5 +130,23 @@ Deno.test("always closes browser when PDF generation fails", async () => {
       "pdf failed",
     );
     assertEquals(calls.closeCount, 1);
+  });
+});
+
+Deno.test("does not downscale multi-page content", async () => {
+  await withTempDir(async (dir) => {
+    const outPath = join(dir, "resume.pdf");
+    const { generator, calls } = createMockGenerator({
+      measuredHeights: {
+        contentHeightPx: 2500,
+        a4HeightPx: 1000,
+      },
+      onPdfPath: async (path) => {
+        await Deno.writeTextFile(path, "fake-pdf");
+      },
+    });
+
+    await generator.generate("<html><body>resume</body></html>", outPath);
+    assertEquals(calls.pdfScale, 1);
   });
 });

@@ -1,6 +1,29 @@
-out/*
-resume/*
+# Generated / local-only
+out/
+.local/
+research/
 
-EXAMPLES.md
+# Frontend workspace kept private in this repo ATM
+.frontend/
 
-.DS_Store
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs / temp / cache
+*.log
+*.tmp
+*.swp
+coverage/
+dist/
+build/
+.cache/
+
+# IDE / OS noise
+.vscode/
+.idea/
+**/.DS_Store

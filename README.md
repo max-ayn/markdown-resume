@@ -1,15 +1,13 @@
 # Markdown Resume Builder
 
-Generate a resume from Markdown + CSS into:
-- `out/resume.html`
-- `out/resume.pdf` (optional)
+Generate resumes from semantic Markdown + CSS into HTML and PDF.
 
-Built with Deno and Playwright.
+## Install
 
-## Prerequisites
+### Prerequisites
 
 - Deno 2+
-- For PDF export: Playwright Chromium
+- Playwright Chromium (for PDF export)
 
 Install Chromium once:
 
@@ -19,68 +17,73 @@ deno run -A npm:playwright install chromium
 
 ## Quick Start
 
-1. Prepare your resume source:
+From repository root:
 
 ```bash
-cp resume/resume.md ./resume.md
+cd cli
+deno run --allow-env --allow-sys --allow-read --allow-write --allow-run cli.ts \
+  --md ../examples/software/resume.md \
+  --css ../examples/software/styles.css \
+  --html-out ../out/resume.html
 ```
 
-`src/main.ts` reads `./resume.md` and `./styles.css`.
+This generates `out/resume.html`.
 
-2. Build HTML:
+## HTML/PDF Generation Commands
+
+### HTML only
 
 ```bash
-deno task build
+cd cli
+deno run --allow-env --allow-sys --allow-read --allow-write --allow-run cli.ts \
+  --md ../examples/software/resume.md \
+  --css ../examples/software/styles.css \
+  --html-out ../out/resume.html
 ```
 
-3. Build HTML + PDF:
+### HTML + PDF
 
 ```bash
-deno task build:pdf
+cd cli
+deno run --allow-env --allow-sys --allow-read --allow-write --allow-run cli.ts \
+  --md ../examples/software/resume.md \
+  --css ../examples/software/styles.css \
+  --html-out ../out/resume.html \
+  --pdf-out ../out/resume.pdf \
+  --pdf
 ```
 
-## Available Tasks
+### Optional output
 
-- `deno task dev`  
-  Watch mode for `src/main.ts`
-- `deno task build`  
-  Generate `out/resume.html`
-- `deno task build:pdf`  
-  Generate `out/resume.html` and `out/resume.pdf`
+- Raw markdown re-serialization:
+
+```bash
+--raw-md-out ../out/resume_raw.md
+```
 
 ## Project Structure
 
-- `src/main.ts`  
-  Pipeline entrypoint
-- `src/generate_html.ts`  
-  Markdown-to-HTML renderer + HTML template
-- `src/generate_pdf.ts`  
-  HTML-to-PDF generator with Playwright
-- `styles.css`  
-  Resume visual style (print-first)
-- `resume/resume.md`  
-  Example resume content
-
-## Markdown Support
-
-The custom renderer supports a focused subset:
-- Headings: `#`, `##`, `###`
-- Paragraphs
-- Bullets: `- item`
-- Inline: `` `code` ``, `**bold**`, `*italic*`, links
-
-If you need full Markdown compatibility, swap the parser for a dedicated Markdown library.
-
-## Tests
-
-Run core tests:
-
-```bash
-deno test --allow-read --allow-write src/generate_html_test.ts
-deno test --allow-read --allow-write --allow-env --allow-sys src/generate_pdf_test.ts
-```
+- `cli/`
+  - `cli.ts`: command entrypoint (parse -> render -> optional pdf)
+  - `deno.json`: CLI runtime config/imports
+- `core/src/`
+  - `parser.ts`: semantic Markdown parser
+  - `html-renderer.ts`: semantic HTML renderer
+  - `generate-pdf.ts`: Playwright PDF generator
+  - `raw-markdown.ts`: markdown serializer
+  - `types.ts`: document types
+- `examples/`
+  - Example resumes and CSS themes (`simple`, `software`, `ux-ui`)
+- `docs/`
+  - Markdown/YAML format and behavior documentation
+- `out/`
+  - Generated artifacts (ignored by git)
 
 ## Notes
 
-- PDF generation requires Playwright runtime permissions (`--allow-env --allow-sys --allow-run`).
-- Output directories are created automatically.
+- PDF export needs Playwright permissions (`--allow-env --allow-sys --allow-run`).
+- If local images are used in markdown/CSS, keep asset paths valid from the source markdown location.
+
+## License
+
+All Rights Reserved — for portfolio/interview review only.
