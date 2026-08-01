@@ -11,24 +11,12 @@
   --icon: #2b5f7d;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-}
-
 body {
   background: var(--page-bg);
   color: var(--ink);
   font-family: "Montserrat", "Avenir Next", "Segoe UI", Arial, sans-serif;
   font-size: 2.72mm;
   line-height: 1.42;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
 }
 
 a {
@@ -37,22 +25,14 @@ a {
 }
 
 .page {
-  width: 210mm;
-  min-height: 297mm;
   margin: 4.5mm auto;
   background: var(--paper);
-  box-shadow: 0 2.6mm 7.2mm rgb(0 0 0 / 16%);
-  overflow: hidden;
 }
 
 .resume {
   display: grid;
   grid-template-columns: 35% 65%;
   grid-template-areas: "sidebar main";
-}
-
-.resume-region {
-  min-width: 0;
 }
 
 .resume > .resume-region[data-region="sidebar"] {
@@ -81,34 +61,28 @@ a {
   display: none;
 }
 
-.resume-section {
-  margin: 0 0 3.1mm;
+/*
+ * Sections have no wrapping element - a section is just an `<h2 class="id">`
+ * followed by sibling `.resume-block`s until the next `<h2>`. Section-title
+ * styling therefore targets the heading directly; section-scoped content
+ * styling targets `.resume-block--<role>`/`.resume-block--<kind>` (from
+ * `:::block{role=... kind=...}`), which plays the role the old
+ * `[data-section="..."]` wrapper used to.
+ */
+.resume-region > h2 {
+  margin: 3.1mm 0 2.15mm;
 }
 
-.resume-section:last-child {
-  margin-bottom: 0;
-}
-
-.resume-section__title {
-  margin: 0 0 1.4mm;
-  color: var(--accent);
-  font-size: 3.9mm;
-  font-weight: 740;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.resume-block {
-  margin: 0 0 2.4mm;
-  padding: 0;
-  border: 0;
+.resume-region > h2:first-child {
+  margin-top: 0;
 }
 
 .resume-block:last-child {
   margin-bottom: 0;
 }
 
-.resume-block__title {
+/* `###` block-title shorthand renders as a plain, unclassed `<h3>`. */
+.resume-block h3 {
   margin: 0 0 0.5mm;
   color: var(--accent);
   font-size: 2.95mm;
@@ -116,20 +90,23 @@ a {
   line-height: 1.3;
 }
 
-.resume-block__field {
+.resume-field {
   margin: 0 0 0.55mm;
 }
 
-.resume-block__field--summary,
-.resume-block__field--note,
-.resume-block__field--meta,
-.resume-block__field--date {
+.resume-field--summary,
+.resume-field--meta {
   color: var(--muted);
 }
 
-.resume-block__field--note {
+.date {
+  color: var(--muted);
+}
+
+/* `@note` renders as a plain `<blockquote><p>...</p></blockquote>`. */
+.resume-block blockquote {
   position: relative;
-  margin-top: 1mm;
+  margin: 1mm 0 0;
   padding: 0.8mm 1.1mm 0.8mm 2mm;
   border-left: 0.45mm solid #8eb0c3;
   background: #edf4f8;
@@ -137,7 +114,11 @@ a {
   color: #4f6674;
 }
 
-.resume-block__field--note::before {
+.resume-block blockquote p {
+  margin: 0;
+}
+
+.resume-block blockquote::before {
   content: "\201C";
   position: absolute;
   left: 0.55mm;
@@ -148,21 +129,24 @@ a {
   font-style: normal;
 }
 
-.resume-block__items {
+/* Plain markdown bullet lists (highlights) inside a block - excludes the
+   `@stack` list, which carries its own `.resume-block__stack` class. */
+.resume-block > ul:not(.resume-block__stack) {
   margin: 0.75mm 0 0;
-  padding: 0 0 0 3.1mm;
 }
 
-.resume-block__item {
+.resume-block > ul:not(.resume-block__stack) > li {
   margin: 0 0 0.5mm;
 }
 
-.resume-block__item:last-child {
+.resume-block > ul:not(.resume-block__stack) > li:last-child {
   margin-bottom: 0;
 }
 
 .resume-block__stack {
+  list-style: none;
   margin: 0.6mm 0 0.95mm;
+  padding: 0;
   display: flex;
   flex-wrap: wrap;
   gap: 0.8mm;
@@ -171,6 +155,8 @@ a {
 .resume-block__stack-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  line-height: 1;
   padding: 0.32mm 1.05mm;
   border: 0.24mm solid #b9cfdb;
   border-radius: 999mm;
@@ -179,68 +165,40 @@ a {
   background: #eef5f9;
 }
 
-.resume-block__icon {
+/* `@icon[:provider]` - the icon itself is an `<img>` (CDN provider) or an
+   icon-font `<span data-icon>` (no provider); `.resume-block__item` is the
+   wrapping `<span class="icon-line">`, not the `<li>`. */
+.resume-block__icon-wrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 3.2mm;
   min-width: 3.2mm;
-  color: var(--icon);
-  font-size: 0;
-  line-height: 1;
 }
 
-.resume-block__icon::before {
-  font-family: "Font Awesome 6 Free";
-  font-weight: 900;
+.resume-block__icon-wrap img {
+  width: 2.6mm;
+  height: 2.6mm;
+  object-fit: contain;
+}
+
+.resume-block__icon {
+  color: var(--icon);
   font-size: 2.48mm;
   line-height: 1;
-  content: "\f128";
-}
-
-.resume-block__icon--location-dot::before {
-  content: "\f3c5";
-}
-
-.resume-block__icon--envelope::before {
-  content: "\f0e0";
-}
-
-.resume-block__icon--phone::before {
-  content: "\f095";
-}
-
-.resume-block__icon--github::before,
-.resume-block__icon--linkedin::before {
-  font-family: "Font Awesome 6 Brands";
-  font-weight: 400;
-}
-
-.resume-block__icon--github::before {
-  content: "\f09b";
-}
-
-.resume-block__icon--linkedin::before {
-  content: "\f08c";
 }
 
 /* Sidebar */
-.resume-region[data-region="sidebar"] .resume-section__title {
+.resume-region--sidebar h2 {
   margin-bottom: 1.2mm;
+  color: var(--accent);
   font-size: 3.45mm;
   font-weight: 740;
-}
-
-[data-section="profile-picture"] {
-  margin-bottom: 5.5mm;
-}
-
-[data-section="profile-picture"] .resume-section__title {
-  display: none;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .resume-block--profile-image {
-  margin: 0;
   display: flex;
   justify-content: center;
 }
@@ -260,13 +218,17 @@ a {
   object-fit: cover;
 }
 
-[data-section="contact"] .resume-block__items {
+.resume-block--contact ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-[data-section="contact"] .resume-block__item {
+.resume-block--contact li {
+  margin: 0;
+}
+
+.resume-block--contact .resume-block__item {
   display: grid;
   grid-template-columns: 4mm 1fr;
   column-gap: 1.3mm;
@@ -275,91 +237,88 @@ a {
   color: #3f5968;
 }
 
-[data-section="education"] .resume-block,
-[data-section="skills"] .resume-block,
-[data-section="soft-skills"] .resume-block,
-[data-section="languages"] .resume-block,
-[data-section="interests"] .resume-block {
+.resume-block--education,
+.resume-block--skills,
+.resume-block--skills-group,
+.resume-block--soft-skills,
+.resume-block--languages,
+.resume-block--interests {
   margin-bottom: 2.35mm;
 }
 
-[data-section="education"] .resume-block__title {
+.resume-block--education h3 {
   font-size: 2.55mm;
   margin-bottom: 0.25mm;
 }
 
-[data-section="education"] .resume-block__field--org,
-[data-section="education"] .resume-block__field--meta {
+.resume-block--education .resume-field--org,
+.resume-block--education .resume-field--meta {
   display: inline;
   margin: 0;
   font-size: 2.22mm;
 }
 
-[data-section="education"] .resume-block__field--org {
+.resume-block--education .resume-field--org {
   color: #294f66;
   font-weight: 640;
 }
 
-[data-section="education"] .resume-block__field--meta {
+.resume-block--education .resume-field--meta {
   color: #587383;
 }
 
-[data-section="education"] .resume-block__field--meta::before {
+.resume-block--education .resume-field--meta::before {
   content: " | ";
   color: #7e9aa9;
 }
 
-[data-section="education"] .resume-block__field--summary {
+.resume-block--education .resume-field--summary {
   margin-top: 0.5mm;
 }
 
-[data-section="education"] .resume-block__field,
-[data-section="skills"] .resume-block__item,
-[data-section="soft-skills"] .resume-block__item,
-[data-section="languages"] .resume-block__item,
-[data-section="interests"] .resume-block__item {
+.resume-block--education .resume-field,
+.resume-block--skills > ul > li,
+.resume-block--soft-skills > ul > li,
+.resume-block--languages > ul > li,
+.resume-block--interests > ul > li {
   font-size: 2.32mm;
   color: #3e5c6e;
 }
 
-[data-section="skills"] .resume-block--skills {
+.resume-block--skills {
   margin-bottom: 1.25mm;
 }
 
-[data-section="skills"] .resume-block--skills .resume-block__title {
+.resume-block--skills > .resume-field--title {
   margin: 0;
   font-size: 2.45mm;
   color: #3c5f74;
   font-weight: 600;
 }
 
-[data-section="skills"] .resume-block--skills-group {
-  margin-bottom: 1.35mm;
-}
-
-[data-section="skills"] .resume-block--skills-group .resume-block__title {
+.resume-block--skills-group .resume-field--title {
   margin-bottom: 0.3mm;
   font-size: 2.32mm;
   color: #4a6a7d;
   font-weight: 680;
 }
 
-[data-section="skills"] .resume-block__items,
-[data-section="soft-skills"] .resume-block__items,
-[data-section="languages"] .resume-block__items,
-[data-section="interests"] .resume-block__items {
+.resume-block--skills-group > ul,
+.resume-block--soft-skills > ul,
+.resume-block--languages > ul,
+.resume-block--interests > ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-[data-section="skills"] .resume-block__items {
+.resume-block--skills-group > ul {
   display: flex;
   flex-wrap: wrap;
   gap: 0.62mm;
 }
 
-[data-section="skills"] .resume-block__item {
+.resume-block--skills-group > ul > li {
   margin: 0;
   padding: 0.24mm 0.88mm;
   border: 0.22mm solid #bdd2de;
@@ -370,13 +329,9 @@ a {
   line-height: 1.12;
 }
 
-/* Main hero */
-[data-region="main"] [data-section="alex-morgan"] {
-  margin-bottom: 4.4mm;
-}
-
-[data-region="main"] [data-section="alex-morgan"] .resume-section__title {
-  margin: 0;
+/* Main hero: `## Alex Morgan {.name}` */
+.resume-region--main h2.name {
+  margin: 0 0 4.4mm;
   font-size: 8.6mm;
   line-height: 0.94;
   letter-spacing: 0.04em;
@@ -384,7 +339,7 @@ a {
   text-transform: uppercase;
 }
 
-[data-region="main"] .resume-block--title .resume-block__field--summary {
+.resume-block--title .resume-field--subtitle {
   margin-top: 0.85mm;
   font-size: 2.72mm;
   color: #4f6e80;
@@ -394,43 +349,44 @@ a {
 }
 
 /* Main sections */
-[data-region="main"] .resume-section__title {
-  margin: 0 0 2.15mm;
+.resume-region--main h2 {
+  margin: 3.1mm 0 2.15mm;
+  color: var(--accent);
   font-size: 3.35mm;
   font-weight: 730;
 }
 
-[data-region="main"] .resume-section:not([data-section="alex-morgan"]) .resume-section__title {
+.resume-region--main h2:not(.name) {
   border-bottom: 1.26mm solid var(--line);
   padding-bottom: 0.65mm;
 }
 
 /* Experience / Projects timeline */
-[data-region="main"] [data-section="experience"] .resume-block,
-[data-region="main"] [data-section="projects"] .resume-block {
+.resume-block--job,
+.resume-block--project {
   position: relative;
   margin-bottom: 2.95mm;
   padding-left: 21mm;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block:last-child,
-[data-region="main"] [data-section="projects"] .resume-block:last-child {
+.resume-block--job:last-child,
+.resume-block--project:last-child {
   margin-bottom: 0;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block::before,
-[data-region="main"] [data-section="projects"] .resume-block::before {
+.resume-block--job::before,
+.resume-block--project::before {
   content: "";
   position: absolute;
   left: 17.4mm;
   top: 0.7mm;
   bottom: 0.6mm;
-  width: 0.34mm;
+  width: 0.35mm;
   background: #acc4d2;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block::after,
-[data-region="main"] [data-section="projects"] .resume-block::after {
+.resume-block--job::after,
+.resume-block--project::after {
   content: "";
   position: absolute;
   left: 16.75mm;
@@ -441,8 +397,10 @@ a {
   background: #7090a5;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block__field--date,
-[data-region="main"] [data-section="projects"] .resume-block__field--date {
+/* `@date` renders inline inside an otherwise unclassed `<p>`; select that
+   paragraph via :has() to reproduce the old timeline date column. */
+.resume-block--job > p:has(.date),
+.resume-block--project > p:has(.date) {
   position: absolute;
   left: 0;
   top: 0.25mm;
@@ -455,65 +413,63 @@ a {
   text-transform: uppercase;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block__title,
-[data-region="main"] [data-section="projects"] .resume-block__title {
+.resume-block--job h3,
+.resume-block--project h3 {
   margin: 0 0 0.25mm;
   font-size: 2.88mm;
   font-weight: 740;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block__field--org,
-[data-region="main"] [data-section="projects"] .resume-block__field--org {
+.resume-block--job .resume-field--org,
+.resume-block--project .resume-field--org {
   margin: 0 0 0.18mm;
   font-size: 2.36mm;
   color: #2f556c;
   font-weight: 680;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block__field--meta,
-[data-region="main"] [data-section="projects"] .resume-block__field--meta {
+.resume-block--job .resume-field--meta,
+.resume-block--project .resume-field--meta {
   margin: 0 0 0.52mm;
   font-size: 2.12mm;
   color: #5f7c90;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block__stack,
-[data-region="main"] [data-section="projects"] .resume-block__stack {
-  display: flex;
-  flex-wrap: wrap;
+.resume-block--job .resume-block__stack,
+.resume-block--project .resume-block__stack {
   gap: 0.62mm;
   margin: 0.35mm 0 0.8mm;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block__stack-badge,
-[data-region="main"] [data-section="projects"] .resume-block__stack-badge {
+.resume-block--job .resume-block__stack-badge,
+.resume-block--project .resume-block__stack-badge {
   padding: 0.24mm 0.88mm;
   border: 0.22mm solid #bdd2de;
   border-radius: 999mm;
   background: #f0f6fa;
   color: #4d6c80;
   font-size: 1.95mm;
-  line-height: 1.12;
+  line-height: 1;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block__items,
-[data-region="main"] [data-section="projects"] .resume-block__items {
+.resume-block--job > ul:not(.resume-block__stack),
+.resume-block--project > ul:not(.resume-block__stack) {
   margin-top: 0.55mm;
   padding-left: 2.6mm;
 }
 
-[data-region="main"] [data-section="experience"] .resume-block__item,
-[data-region="main"] [data-section="projects"] .resume-block__item {
+.resume-block--job > ul:not(.resume-block__stack) > li,
+.resume-block--project > ul:not(.resume-block__stack) > li {
   margin-bottom: 0.38mm;
   color: #415d6f;
 }
 
-[data-region="main"] [data-section="summary"] .resume-block__field--summary {
+.resume-block--summary .resume-field--summary {
   color: #38596d;
   line-height: 1.5;
 }
 
-[data-region="main"] [data-section="summary"] .resume-block__field--note {
+.resume-block--summary blockquote {
   margin-top: 1.2mm;
 }
 
@@ -531,69 +487,4 @@ code {
   outline: 0.26mm dashed #cc8b00;
   background: #fff3d6;
   opacity: 0.8;
-}
-
-@media screen and (max-width: 920px) {
-  .page {
-    width: 100%;
-    min-height: auto;
-    margin: 0;
-    box-shadow: none;
-  }
-
-  .resume {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "main"
-      "sidebar";
-  }
-
-  .resume > .resume-region[data-region="main"],
-  .resume > .resume-region[data-region="sidebar"] {
-    padding: 5mm;
-    border: 0;
-  }
-
-  [data-region="main"] [data-section="alex-morgan"] .resume-section__title {
-    font-size: 6.8mm;
-  }
-
-  [data-region="main"] [data-section="experience"] .resume-block,
-  [data-region="main"] [data-section="projects"] .resume-block {
-    padding-left: 17mm;
-  }
-
-  [data-region="main"] [data-section="experience"] .resume-block::before,
-  [data-region="main"] [data-section="projects"] .resume-block::before {
-    left: 13.8mm;
-  }
-
-  [data-region="main"] [data-section="experience"] .resume-block::after,
-  [data-region="main"] [data-section="projects"] .resume-block::after {
-    left: 13.15mm;
-  }
-
-  [data-region="main"] [data-section="experience"] .resume-block__field--date,
-  [data-region="main"] [data-section="projects"] .resume-block__field--date {
-    width: 12.8mm;
-    font-size: 2.03mm;
-  }
-}
-
-@media print {
-  @page {
-    size: A4;
-    margin: 0;
-  }
-
-  body {
-    background: #fff;
-  }
-
-  .page {
-    width: 210mm;
-    min-height: 297mm;
-    margin: 0;
-    box-shadow: none;
-  }
 }

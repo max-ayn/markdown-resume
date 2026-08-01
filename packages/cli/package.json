@@ -1,0 +1,15 @@
+{
+  "name": "@markdown-resume/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/cli.ts",
+  "scripts": {
+    "start": "tsx ./src/cli.ts",
+    "test": "vitest run",
+    "test:types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@markdown-resume/core": "workspace:*"
+  }
+}

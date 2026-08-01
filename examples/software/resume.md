@@ -1,26 +1,34 @@
 ---
+title: sftw
 template: resume
 lang: en
 icons:
-  - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css
+  - fa:
+    - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css
+  - feather:
+    - https://cdn.jsdelivr.net/npm/feather-icons@4.29.2/dist/feather.min.js
 fonts:
-  - https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap
-  - https://fonts.googleapis.com/css2?family=Playwrite+IE:wght@100..400&display=swap
+  - Montserrat:
+    - https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap
 images:
   profile: ./assets/profile.svg
+date:
+  - article: mm YYYY
+  - year: YYYY
+custom:
+  field:
+    - title
+    - subtitle
+    - summary
+    - org
+    - meta
+    - links
 page:
   size: A4
   margin: 0
 regions:
   header:
     enabled: false
-  main:
-    enabled: true
-    sections:
-      - alex-morgan
-      - summary
-      - experience
-      - projects
   sidebar:
     enabled: true
     sections:
@@ -31,6 +39,13 @@ regions:
       - interests
       - education
       - languages
+  main:
+    enabled: true
+    sections:
+      - name
+      - summary
+      - experience
+      - projects
   footer:
     enabled: false
 render:
@@ -41,29 +56,29 @@ render:
 class_prefix: resume
 ---
 
-## Alex Morgan
+## Alex Morgan {.name}
 
 :::block{role=title}
 @subtitle Senior Data Scientist
 :::
 
-@hidden ## Profile picture
+@hidden ## Profile picture {.profile-picture}
 
 :::block{role=profile-image}
 @image profile
 :::
 
-## Contact
+## Contact {.contact}
 
 :::block{role=contact}
-- @icon location-dot | Zurich, Switzerland
-- @icon envelope | [hello@example.com](mailto:hello@example.com)
-- @icon phone | +00 000 000 0000
-- @icon github | [github.com/example](https://github.com/example)
-- @icon linkedin | [linkedin.com/in/example](https://linkedin.com/in/example)
+- @icon:fa location-dot | Zurich, Switzerland
+- @icon:fa envelope | [hello@example.com](mailto:hello@example.com)
+- @icon:fa phone | +00 000 000 0000
+- @icon:fa github | [github.com/example](https://github.com/example)
+- @icon:fa linkedin | [linkedin.com/in/example](https://linkedin.com/in/example)
 :::
 
-## Summary
+## Summary {.summary}
 
 :::block{role=summary}
 @summary Senior data scientist with **6+ years of experience** delivering machine learning solutions for forecasting, anomaly detection, and decision support in production environments.
@@ -71,7 +86,7 @@ class_prefix: resume
 @note Open to senior data science roles spanning applied ML, product analytics, and ML platform collaboration.
 :::
 
-## Experience
+## Experience {.experience}
 
 :::block{kind=job role=experience}
 ### Senior Data Scientist — Climate Intelligence Platform
@@ -87,7 +102,7 @@ class_prefix: resume
 
 :::block{kind=job role=experience}
 ### Data Scientist — Mission-Critical Systems Company
-@date Nov 2023 – Nov 2024
+@date:article 01/11/2023 – Nov 2024
 @org Mission-Critical Systems Company
 @meta Southern France
 @stack Python, Scikit-learn, TensorFlow, SQL, Airflow, Docker
@@ -101,13 +116,13 @@ class_prefix: resume
 @date Mar 2020 – Aug 2022
 @org Industrial Analytics Group
 @meta France
-@stack Python, NumPy, Scikit-learn, Elasticsearch, Tableau
+@stack Python, NumPy, Scikit-learn, Elasticsearch
 - Built predictive maintenance models using equipment logs and sensor features, reducing unplanned downtime.
 - Designed KPI frameworks and cohort analyses to support product and operations decision-making.
 - Improved search and diagnostic workflows by combining statistical scoring with domain-specific heuristics.
 :::
 
-## Projects
+## Projects {.projects}
 
 :::block{kind=project role=projects}
 ### ForecastLab
@@ -119,21 +134,17 @@ class_prefix: resume
 - Exposed model inference through a lightweight API and analyst-facing dashboard for scenario testing.
 :::
 
-## Education
+## Education {.education}
 
 :::block{kind=education role=education}
 ### M.Sc. in Data Science — European Institute of Technology
-@date 2018 – 2021
+@date:year 01/08/2018 – 2021
 @org European Institute of Technology
 @meta Europe
 @summary Focus on machine learning, applied statistics, optimization, and large-scale data systems.
 :::
 
-## Skills
-
-:::block{role=skills}
-@title Technical Skills
-:::
+## Skills {.skills}
 
 :::block{role=skills-group}
 @title Core Languages
@@ -188,16 +199,7 @@ class_prefix: resume
 - Plotly
 :::
 
-:::block{role=skills-group}
-@title Collaboration & Delivery
-- Problem Framing
-- Stakeholder Communication
-- Technical Documentation
-- Agile Delivery
-- Mentoring
-:::
-
-## Soft Skills
+## Soft Skills {.soft-skills}
 
 :::block{role=soft-skills}
 - Structured analytical thinking
@@ -207,7 +209,7 @@ class_prefix: resume
 - Ownership from research to production
 :::
 
-## Languages
+## Languages {.languages}
 
 :::block{role=languages}
 - English — Fluent
@@ -215,7 +217,7 @@ class_prefix: resume
 - German — Basic
 :::
 
-## Interests
+## Interests {.interests}
 
 :::block{role=interests}
 - Applied AI research

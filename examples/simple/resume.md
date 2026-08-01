@@ -1,27 +1,20 @@
 ---
 template: resume
 lang: en
-icons: 
-    - https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200
 page:
   size: A4
   margin: 0
 regions:
   header:
-    enabled: true
+    enabled: false
   main:
-    enabled: true
-    sections:
-      - who-am-i-?
-      - expert-in
-      - education
-      - experience
+    enabled: false
   sidebar:
     enabled: false
   footer:
     enabled: false
 render:
-  icons_enabled: true
+  icons_enabled: false
   html_passthrough: false
   markdown_in_blocks: false
   allow_nested_blocks: false

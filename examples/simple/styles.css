@@ -22,16 +22,12 @@ body {
   background: var(--page-bg);
   color: var(--ink);
   font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
 }
 
 .page {
   width: 210mm;
   min-height: 297mm;
   margin: 6mm auto;
-  background: var(--paper);
-  box-shadow: 0 14px 38px rgb(0 0 0 / 45%);
 }
 
 .resume {
@@ -140,50 +136,4 @@ body {
 .resume-region--sidebar,
 .resume-region--footer {
   display: none;
-}
-
-@media screen and (max-width: 900px) {
-  .page {
-    width: 100%;
-    min-height: auto;
-    margin: 0;
-    box-shadow: none;
-  }
-
-  .resume {
-    padding: 7mm 5mm;
-  }
-
-  .resume-title {
-    font-size: 8.5mm;
-  }
-
-  .resume-region--main {
-    font-size: 3.8mm;
-  }
-}
-
-@media print {
-  @page {
-    size: A4;
-    margin: 12mm 10mm 16mm 10mm;
-  }
-  
-  body {
-    background: #fff;
-  }
-  
-  .page {
-    margin: 0;
-    box-shadow: none;
-  }
-
-  .resume {
-    padding: 0;
-  }
-
-  .resume-section__line {
-    orphans: 3;
-    widows: 3;
-  }
 }
