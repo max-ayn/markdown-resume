@@ -12,4 +12,4 @@ standalone published package yet, so use it by cloning the repo and running
 it via `pnpm run cli --`, as shown in
 [Your first example](/guide/getting-started#your-first-example).
 
-For every flag and subcommand, see the [CLI reference](/guide/tooling/cli-reference).
+For every flag and subcommand, see the [CLI reference](/guide/getting-started#cli-reference).

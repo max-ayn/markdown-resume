@@ -6,12 +6,19 @@ plus a small marker syntax layered on top for resume-specific structure:
 blocks, dates, icons, images, and hidden content. Anything that isn't one of
 the markers below is just regular Markdown.
 
+- [Custom fields](/reference/markdown/custom-fields) — `@fieldname` labeled
+  fields inside a block.
+- [Directives](/reference/markdown/directives) — `@date`, `@icon`, `@image`,
+  `@note`, `@stack`, `@hidden`.
+- [Validation](/reference/markdown/validation) — every issue the renderer can
+  report.
+
 ## Headings and sections
 
 - `#` (H1) — the document title.
 - `##` (H2) — starts a new **section**. A `{.id}` suffix on the heading
   gives the section an explicit id, used to place it in a
-  [region](#regions) (see [YAML → regions](/reference/yaml#regions)):
+  [region](#regions) (see [YAML → regions](/reference/frontmatter-config#regions)):
 
   ```md
   ## Experience {.experience}
@@ -70,117 +77,8 @@ styling — they do **not** move the block into a different top-level region
 wrapper. Which `<div data-region="main">`/`<div data-region="sidebar">` a
 block ends up inside is decided entirely by its **section's** `##` heading
 id and the frontmatter `regions.*.sections` map. See
-[YAML → regions](/reference/yaml#regions).
+[YAML → regions](/reference/frontmatter-config#regions).
 :::
-
-## Custom fields
-
-Inside a block, `@fieldname text` renders a labeled field:
-
-```md
-:::block{role=title}
-@subtitle Senior Data Scientist
-:::
-```
-→ `<div class="resume-field resume-field--subtitle">Senior Data Scientist</div>`
-
-Which field names are recognized is configured in frontmatter via
-`custom.field` (defaults to `title`, `subtitle`, `summary` — see
-[YAML → custom.field](/reference/yaml#custom-field)). Using `@something` that
-isn't in that list, and isn't one of the built-in directives below, is
-flagged as an unknown marker.
-
-## Built-in directives
-
-### `@date`
-
-```md
-@date Nov 2024 – Present
-@date:article 01/11/2023 – Nov 2024
-```
-
-Parses the value (up to a `|`, en dash, em dash, or line end) as one of
-`dd/MM/yyyy`, `MMM yyyy`, or `yyyy-MM-dd`, then formats it with
-`date.formats.<key>` or `date.default` from frontmatter (see
-[YAML → date](/reference/yaml#date)). `today`/`present` (any case) pass
-through unchanged. Values that don't parse (e.g. a bare year, or a whole
-"2018 – 2021" range) render as-is — a bare `yyyy` is deliberately *not*
-parsed, since reformatting it would fabricate a fake month/day.
-
-### `@icon`
-
-```md
-- @icon location-dot | Zurich, Switzerland
-- @icon:fa envelope | hello@example.com
-@icon screenshot_monitor
-```
-
-`@icon name` (no provider) renders an icon-font span
-(`material-symbols-outlined`, `data-icon="name"`) — pair it with a webfont
-stylesheet listed in frontmatter `icons`. `@icon:provider name` renders an
-`<img>` from a CDN, where `provider` is `fa` (Font Awesome) or `feather`
-(Feather Icons) — see [YAML → icons](/reference/yaml#icons). The optional
-`| text` renders alongside the icon; without it, just the icon renders. Works
-both as a standalone block-level line and as list item content.
-
-### `@image`
-
-```md
-@image profile
-@image profile | Profile picture
-@image:assets team/profile.png | Team photo
-```
-
-`@image key` resolves `key` against the frontmatter `images` map (see
-[YAML → images](/reference/yaml#images)). `@image:bank path` resolves
-through a named bank instead (`assets`, `cdn`) rather than the `images` map.
-The optional `| caption` renders as a `<figcaption>`.
-
-### `@note`
-
-```md
-@note Open to relocation.
-```
-
-Renders as a `<blockquote><p>...</p></blockquote>` — a secondary note
-attached to whatever block it's in.
-
-### `@stack`
-
-```md
-@stack Python, PyTorch, Docker
-```
-
-Comma-separated list, rendered as a badge list
-(`<ul class="resume-block__stack"><li class="resume-block__stack-badge">...`).
-
-### `@hidden`
-
-```md
-@hidden Internal note, never rendered.
-- @hidden Also never rendered, as a list item.
-@hidden ## Hidden section {.id}
-```
-
-Drops the line entirely from the rendered output. The one exception is a
-hidden **heading** (`@hidden ## ... {.id}`), which still anchors a section
-for region placement (see [Headings and sections](#headings-and-sections))
-while rendering nothing.
-
-## Validation
-
-Rendering always runs a validation pass and reports issues (it does not stop
-the render). Checked:
-
-- an `@field` from `custom.field` with no value (empty field)
-- `@date`/`@date:key` with a `key` not declared in frontmatter `date`, or
-  with no value
-- `@icon:provider` with a `provider` not declared in frontmatter `icons`, or
-  with no icon name
-- `@image key` where `key` isn't in frontmatter `images`
-- any `@marker` that isn't a custom field or a built-in directive
-- a section id listed in `regions.*.sections` that no heading's `{.id}`
-  actually declares
 
 ## Full example
 

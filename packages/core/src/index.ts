@@ -32,3 +32,9 @@ export type { GeneratePdfOptions } from "./generate-pdf.ts";
  * HTML to PDF generator backed by Playwright.
  */
 export { HtmlToPdfGenerator } from "./generate-pdf.ts";
+
+/**
+ * Measures how many physical pages rendered HTML content spans.
+ */
+export type { OverflowMeasurement } from "./measure-overflow.ts";
+export { measurePageOverflow } from "./measure-overflow.ts";

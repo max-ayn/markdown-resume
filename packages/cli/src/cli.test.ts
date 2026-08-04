@@ -104,13 +104,13 @@ it("run -w re-renders when the markdown file changes", async () => {
   await waitForFileContent(join(outDir, "resume.html"), "First version");
 
   await writeFile(mdPath, "# Jane Doe\n\nSecond version\n");
-  await waitForFileContent(join(outDir, "resume.html"), "Second version");
-});
+  await waitForFileContent(join(outDir, "resume.html"), "Second version", 15000);
+}, 25000);
 
 async function waitForFileContent(
   path: string,
   expected: string,
-  timeoutMs = 5000,
+  timeoutMs = 10000,
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {

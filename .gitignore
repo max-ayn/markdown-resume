@@ -4,7 +4,7 @@ out/
 research/
 
 # Frontend workspace kept private in this repo ATM
-.frontend/
+docs/.vitepress/cache/
 
 # Dependencies
 node_modules/

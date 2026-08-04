@@ -22,6 +22,8 @@ export type FrontmatterData = {
   font?: {
     family?: string;
   };
+  /** Warn on render if content overflows one physical page. Defaults to true. */
+  single_page?: boolean;
   [key: string]: unknown;
 };
 

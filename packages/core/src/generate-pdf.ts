@@ -2,6 +2,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { mkdir, readFile } from "node:fs/promises";
 import { chromium } from "playwright";
+import { measureContentHeights } from "./measure-overflow.ts";
 
 type PdfPage = {
   emulateMedia(options: { media: "print" | "screen" }): Promise<void>;
@@ -99,52 +100,10 @@ export class HtmlToPdfGenerator {
         );
       }
       await page.evaluate("document.fonts.ready");
-      const { contentHeightPx, a4HeightPx } = await page.evaluate<
-        { contentHeightPx: number; a4HeightPx: number },
-        void
-      >(() => {
-        const doc = (globalThis as unknown as {
-          document: {
-            querySelector(selector: string): {
-              scrollHeight: number;
-              offsetHeight: number;
-              getBoundingClientRect(): { height: number };
-            } | null;
-            documentElement: { scrollHeight: number };
-            body: {
-              scrollHeight: number;
-              appendChild(node: unknown): void;
-            };
-            createElement(tag: string): {
-              style: Record<string, string>;
-              getBoundingClientRect(): { height: number };
-              remove(): void;
-            };
-          };
-        }).document;
-        const pageEl = doc.querySelector(".page");
-        const contentHeightPx = pageEl
-          ? Math.max(
-            pageEl.scrollHeight,
-            pageEl.offsetHeight,
-            pageEl.getBoundingClientRect().height,
-          )
-          : Math.max(
-            doc.documentElement.scrollHeight,
-            doc.body.scrollHeight,
-          );
-
-        const probe = doc.createElement("div");
-        probe.style.position = "absolute";
-        probe.style.left = "-9999px";
-        probe.style.top = "0";
-        probe.style.height = "297mm";
-        probe.style.width = "1px";
-        doc.body.appendChild(probe);
-        const measuredHeight = probe.getBoundingClientRect().height;
-        probe.remove();
-        return { contentHeightPx, a4HeightPx: measuredHeight };
-      });
+      const { contentHeightPx, pageHeightPx: a4HeightPx } = await page.evaluate(
+        measureContentHeights,
+        297,
+      );
       const estimatedPages = contentHeightPx / Math.max(a4HeightPx, 1);
       // Only auto-shrink when content is effectively single-page.
       // For multi-page documents, keep scale=1 to avoid a narrow "shrunk" layout.

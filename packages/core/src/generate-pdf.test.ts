@@ -16,7 +16,7 @@ async function withTempDir(fn: (dir: string) => Promise<void>) {
 function createMockGenerator(params: {
   throwOnPdf?: boolean;
   onPdfPath?: (path: string) => Promise<void> | void;
-  measuredHeights?: { contentHeightPx: number; a4HeightPx: number };
+  measuredHeights?: { contentHeightPx: number; pageHeightPx: number };
 }) {
   const calls = {
     closeCount: 0,
@@ -39,7 +39,7 @@ function createMockGenerator(params: {
     async evaluate(arg: unknown) {
       calls.evaluateArgs.push(arg);
       if (typeof arg === "function") {
-        return params.measuredHeights ?? { contentHeightPx: 1123, a4HeightPx: 1123 };
+        return params.measuredHeights ?? { contentHeightPx: 1123, pageHeightPx: 1123 };
       }
       return undefined;
     },
@@ -132,7 +132,7 @@ it("does not downscale multi-page content", async () => {
     const { generator, calls } = createMockGenerator({
       measuredHeights: {
         contentHeightPx: 2500,
-        a4HeightPx: 1000,
+        pageHeightPx: 1000,
       },
       onPdfPath: async (path) => {
         await writeFile(path, "fake-pdf", "utf-8");

@@ -1,8 +1,14 @@
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { mkdir, readFile, readdir, stat, copyFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, copyFile, writeFile } from "node:fs/promises";
 import { watch } from "node:fs";
-import { HtmlToPdfGenerator, renderMarkdown } from "@markdown-resume/core";
+import { tmpdir } from "node:os";
+import {
+  HtmlToPdfGenerator,
+  measurePageOverflow,
+  renderMarkdown,
+  type FrontmatterData,
+} from "@markdown-resume/core";
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -405,14 +411,12 @@ async function materializeLocalImageAssets(
 
 async function runRender(args: string[]): Promise<void> {
   const flags = parseGlobalFlags(args);
+  if (flags.watch) return watchAndRerender(flags);
   await renderOnce(flags);
-  if (!flags.watch) return;
-  await watchAndRerender(flags);
 }
 
 async function watchAndRerender(flags: GlobalFlags): Promise<void> {
   const watchFolder = await resolveInputFolder(flags.inputFolder);
-  console.log(`Watching ${relative(ROOT, watchFolder)} for changes... (ctrl-c to stop)`);
 
   let running = false;
   let pending = false;
@@ -441,10 +445,54 @@ async function watchAndRerender(flags: GlobalFlags): Promise<void> {
     timer = setTimeout(rerender, 150);
   };
 
+  // Register the watcher before the (possibly slow) initial render so a
+  // save made while that render is still in flight isn't missed: fs.watch
+  // only reports changes that occur after it starts listening.
   // ponytail: recursive fs.watch is macOS/Windows-only; add a directory
   // walker + per-file watchers if Linux support is ever needed.
   watch(watchFolder, { recursive: true }, scheduleRerender);
+  console.log(`Watching ${relative(ROOT, watchFolder)} for changes... (ctrl-c to stop)`);
+  await rerender();
   await new Promise<never>(() => {});
+}
+
+function buildResumeHtmlDocument(
+  data: FrontmatterData,
+  htmlFragment: string,
+  css: string,
+): string {
+  const lang = typeof data.lang === "string" ? data.lang : "en";
+  const fontFamily = data.font?.family?.trim() ||
+    extractPrimaryFontName(data.fonts) || undefined;
+
+  return buildHtmlDocument(htmlFragment, css, {
+    lang,
+    stylesheets: collectStylesheetUrls(data),
+    page: data.page,
+    font: { family: fontFamily },
+  });
+}
+
+/** Warns on stdout if `html` overflows a single physical page. No-op when `single_page: false`. Returns whether it warned. */
+async function warnIfOverflowing(
+  data: FrontmatterData,
+  html: string,
+  sourceHtmlPath: string,
+): Promise<boolean> {
+  if (data.single_page === false) return false;
+
+  const { height: pageHeightMm } = resolvePageDimensionsMm(
+    data.page?.size?.trim() || "A4",
+  );
+  const overflow = await measurePageOverflow(html, { pageHeightMm, sourceHtmlPath });
+  if (overflow.overflowRatio <= 0.02) return false;
+
+  console.log(
+    `Warning: content overflows a single page by ${
+      Math.round(overflow.overflowRatio * 100)
+    }% (~${overflow.estimatedPages.toFixed(2)} pages). Set single_page: false in frontmatter to allow multi-page output.`,
+  );
+  return true;
 }
 
 async function renderOnce(flags: GlobalFlags): Promise<void> {
@@ -467,18 +515,7 @@ async function renderOnce(flags: GlobalFlags): Promise<void> {
   }
 
   const css = await readFile(stylePath, "utf-8");
-  const stylesheets = collectStylesheetUrls(data);
-  const lang = typeof data.lang === "string" ? data.lang : "en";
-
-  const fontFamily = data.font?.family?.trim() ||
-    extractPrimaryFontName(data.fonts) || undefined;
-
-  const htmlDocument = buildHtmlDocument(htmlFragment, css, {
-    lang,
-    stylesheets,
-    page: data.page,
-    font: { family: fontFamily },
-  });
+  const htmlDocument = buildResumeHtmlDocument(data, htmlFragment, css);
   const htmlWithLocalAssets = await materializeLocalImageAssets(
     htmlDocument,
     inputMarkdown,
@@ -488,6 +525,8 @@ async function renderOnce(flags: GlobalFlags): Promise<void> {
   await mkdir(dirname(outputHtml), { recursive: true });
   await writeFile(outputHtml, htmlWithLocalAssets, "utf-8");
   console.log(`HTML written to ${relative(ROOT, outputHtml)}`);
+
+  await warnIfOverflowing(data, htmlWithLocalAssets, outputHtml);
 
   if (!wantsPdf) return;
 
@@ -504,6 +543,46 @@ async function renderOnce(flags: GlobalFlags): Promise<void> {
     pageMargin: formatPageMargin(data.page?.margin),
   });
   console.log(`PDF written to ${relative(ROOT, outputPdf)}`);
+}
+
+async function runCheck(args: string[]): Promise<void> {
+  const { inputFolder, mdFlag } = parseGlobalFlags(args);
+  const inputMarkdown = await resolveInputMarkdownPath(inputFolder, mdFlag);
+  const markdown = await readFile(inputMarkdown, "utf-8");
+  const { data, html: htmlFragment, issues } = renderMarkdown(markdown);
+
+  console.log(`Validation: ${issues.length} issue(s)`);
+  for (const issue of issues) {
+    console.log(`  ${issue.line ? `line ${issue.line}: ` : ""}${issue.message}`);
+  }
+  if (issues.length > 0) process.exitCode = 1;
+
+  if (data.single_page === false) return;
+
+  let css = "";
+  try {
+    const stylePath = await resolveStylePath(await resolveInputFolder(inputFolder), null);
+    css = await readFile(stylePath, "utf-8");
+  } catch {
+    // No stylesheet to check against - measure with the unstyled markup alone.
+  }
+  const htmlDocument = buildResumeHtmlDocument(data, htmlFragment, css);
+
+  const tempDir = await mkdtemp(join(tmpdir(), "markdown-resume-check-"));
+  try {
+    const tempHtmlPath = join(tempDir, "resume.html");
+    const htmlWithLocalAssets = await materializeLocalImageAssets(
+      htmlDocument,
+      inputMarkdown,
+      tempHtmlPath,
+    );
+    await writeFile(tempHtmlPath, htmlWithLocalAssets, "utf-8");
+
+    const overflowed = await warnIfOverflowing(data, htmlWithLocalAssets, tempHtmlPath);
+    if (overflowed) process.exitCode = 1;
+  } finally {
+    await rm(tempDir, { recursive: true, force: true });
+  }
 }
 
 const STYLE_BOILERPLATE = `:root {
@@ -600,6 +679,8 @@ export async function run(
   switch (command) {
     case "generate-style":
       return runGenerateStyle(rest);
+    case "check":
+      return runCheck(rest);
     default:
       return runRender(args);
   }

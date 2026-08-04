@@ -1,7 +1,8 @@
-# YAML
+# Frontmatter Config
 
-Every document starts with a [YAML](https://yaml.org/) frontmatter block,
-parsed by [gray-matter](https://github.com/jonschlinkert/gray-matter):
+Frontmatter block enables page configuration. In every markdown file you can you defaults configuration topics that predict style, behavior and meta. 
+
+Example usage:
 
 ```md
 ---
@@ -10,7 +11,7 @@ images:
   profile: ./assets/profile.png
 ---
 
-## Jane Doe {.name}
+# Jane Doe {.name}
 ...
 ```
 
@@ -31,7 +32,7 @@ lang: fr
 ## `custom.field`
 
 Type: `string[]`, default `[title, subtitle, summary]`. Declares which
-`@fieldname` markers render as [custom fields](/reference/markdown#custom-fields)
+`@fieldname` markers render as [custom fields](/reference/markdown/custom-fields)
 (`<div class="resume-field resume-field--name">`). Any `@marker` not in this
 list, and not a built-in directive (`@date`/`@icon`/`@image`/`@note`/`@stack`/`@hidden`),
 is flagged by validation as unknown.
@@ -50,7 +51,7 @@ custom:
 ## `date`
 
 Type: object, or a list of single-key objects — both forms are accepted.
-Configures [`@date:key`](/reference/markdown#date) formatting. The special
+Configures [`@date:key`](/reference/markdown/directives#date) formatting. The special
 key `default` sets the format used when no `:key` is given.
 
 ```yaml
@@ -72,7 +73,7 @@ Format tokens are normalized before being handed to
 ## `images`
 
 Type: `object` mapping a key to a path/URL. Resolved by
-[`@image key`](/reference/markdown#image).
+[`@image key`](/reference/markdown/directives#image).
 
 ```yaml
 images:
@@ -119,6 +120,17 @@ stylesheets:
   - ./theme/custom.css
 ```
 
+## `single_page`
+
+Type: `boolean`, default `true`. When rendering, the CLI estimates the
+content height against the configured `page.size` (default `A4`) and warns
+on stdout if it overflows a single physical page. Set to `false` to opt out
+of this check for resumes that intentionally span multiple pages.
+
+```yaml
+single_page: false
+```
+
 ## `regions`
 
 Type: `object` keyed by region name (conventionally `header`/`main`/`sidebar`/`footer`,
@@ -139,7 +151,7 @@ regions:
 ```
 
 A section's id comes from its heading's `{.id}` suffix (see
-[Markdown → headings and sections](/reference/markdown#headings-and-sections)),
+[Markdown → headings and sections](/reference/markdown/#headings-and-sections)),
 including hidden headings (`@hidden ## ... {.id}`). If a `regions.*.sections`
 entry names an id no heading actually declares, validation flags it as a
 missing section.

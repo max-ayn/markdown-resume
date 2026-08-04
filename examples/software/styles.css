@@ -103,8 +103,10 @@ a {
   color: var(--muted);
 }
 
-/* `@note` renders as a plain `<blockquote><p>...</p></blockquote>`. */
-.resume-block blockquote {
+/* `@note` renders as a plain `<blockquote><p>...</p></blockquote>`, sitting
+   directly inside a `.resume-section` now that section content is no longer
+   forced into a `:::block` wrapper. */
+.resume-section blockquote {
   position: relative;
   margin: 1mm 0 0;
   padding: 0.8mm 1.1mm 0.8mm 2mm;
@@ -114,11 +116,11 @@ a {
   color: #4f6674;
 }
 
-.resume-block blockquote p {
+.resume-section blockquote p {
   margin: 0;
 }
 
-.resume-block blockquote::before {
+.resume-section blockquote::before {
   content: "\201C";
   position: absolute;
   left: 0.55mm;
@@ -198,7 +200,7 @@ a {
   text-transform: none;
 }
 
-.resume-block--profile-image {
+.resume-section--profile-picture {
   display: flex;
   justify-content: center;
 }
@@ -218,17 +220,17 @@ a {
   object-fit: cover;
 }
 
-.resume-block--contact ul {
+.resume-section--contact ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.resume-block--contact li {
+.resume-section--contact li {
   margin: 0;
 }
 
-.resume-block--contact .resume-block__item {
+.resume-section--contact .resume-block__item {
   display: grid;
   grid-template-columns: 4mm 1fr;
   column-gap: 1.3mm;
@@ -237,88 +239,81 @@ a {
   color: #3f5968;
 }
 
-.resume-block--education,
-.resume-block--skills,
-.resume-block--skills-group,
-.resume-block--soft-skills,
-.resume-block--languages,
-.resume-block--interests {
+.resume-section--education,
+.resume-section--skills,
+.resume-section--soft-skills,
+.resume-section--languages,
+.resume-section--interests {
   margin-bottom: 2.35mm;
 }
 
-.resume-block--education h3 {
+.resume-section--education h3 {
   font-size: 2.55mm;
   margin-bottom: 0.25mm;
 }
 
-.resume-block--education .resume-field--org,
-.resume-block--education .resume-field--meta {
+.resume-section--education .resume-field--org,
+.resume-section--education .resume-field--meta {
   display: inline;
   margin: 0;
   font-size: 2.22mm;
 }
 
-.resume-block--education .resume-field--org {
+.resume-section--education .resume-field--org {
   color: #294f66;
   font-weight: 640;
 }
 
-.resume-block--education .resume-field--meta {
+.resume-section--education .resume-field--meta {
   color: #587383;
 }
 
-.resume-block--education .resume-field--meta::before {
+.resume-section--education .resume-field--meta::before {
   content: " | ";
   color: #7e9aa9;
 }
 
-.resume-block--education .resume-field--summary {
+.resume-section--education .resume-field--summary {
   margin-top: 0.5mm;
 }
 
-.resume-block--education .resume-field,
-.resume-block--skills > ul > li,
-.resume-block--soft-skills > ul > li,
-.resume-block--languages > ul > li,
-.resume-block--interests > ul > li {
+.resume-section--education .resume-field,
+.resume-section--skills > .resume-block > ul > li,
+.resume-section--soft-skills > .resume-block > ul > li,
+.resume-section--languages > .resume-block > ul > li,
+.resume-section--interests > .resume-block > ul > li {
   font-size: 2.32mm;
   color: #3e5c6e;
 }
 
-.resume-block--skills {
+/* Each `:::block` under Skills is one skills group (`@title` + pill list). */
+.resume-section--skills > .resume-block {
   margin-bottom: 1.25mm;
 }
 
-.resume-block--skills > .resume-field--title {
-  margin: 0;
-  font-size: 2.45mm;
-  color: #3c5f74;
-  font-weight: 600;
-}
-
-.resume-block--skills-group .resume-field--title {
+.resume-section--skills > .resume-block .resume-field--title {
   margin-bottom: 0.3mm;
   font-size: 2.32mm;
   color: #4a6a7d;
   font-weight: 680;
 }
 
-.resume-block--skills-group > ul,
-.resume-block--soft-skills > ul,
-.resume-block--languages > ul,
-.resume-block--interests > ul {
+.resume-section--skills > .resume-block > ul,
+.resume-section--soft-skills > .resume-block > ul,
+.resume-section--languages > .resume-block > ul,
+.resume-section--interests > .resume-block > ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
-.resume-block--skills-group > ul {
+.resume-section--skills > .resume-block > ul {
   display: flex;
   flex-wrap: wrap;
   gap: 0.62mm;
 }
 
-.resume-block--skills-group > ul > li {
+.resume-section--skills > .resume-block > ul > li {
   margin: 0;
   padding: 0.24mm 0.88mm;
   border: 0.22mm solid #bdd2de;
@@ -329,8 +324,8 @@ a {
   line-height: 1.12;
 }
 
-/* Main hero: `## Alex Morgan {.name}` */
-.resume-region--main h2.name {
+/* Main hero: `# Alex Morgan {.name}` */
+.resume-region--main h1.name {
   margin: 0 0 4.4mm;
   font-size: 8.6mm;
   line-height: 0.94;
@@ -339,7 +334,7 @@ a {
   text-transform: uppercase;
 }
 
-.resume-block--title .resume-field--subtitle {
+.resume-section--name .resume-field--subtitle {
   margin-top: 0.85mm;
   font-size: 2.72mm;
   color: #4f6e80;
@@ -361,21 +356,22 @@ a {
   padding-bottom: 0.65mm;
 }
 
-/* Experience / Projects timeline */
-.resume-block--job,
-.resume-block--project {
+/* Experience / Projects timeline - each entry is a bare `### Title`
+   auto-wrapped into a plain `.resume-block` directly under its section. */
+.resume-section--experience > .resume-block,
+.resume-section--projects > .resume-block {
   position: relative;
   margin-bottom: 2.95mm;
   padding-left: 21mm;
 }
 
-.resume-block--job:last-child,
-.resume-block--project:last-child {
+.resume-section--experience > .resume-block:last-child,
+.resume-section--projects > .resume-block:last-child {
   margin-bottom: 0;
 }
 
-.resume-block--job::before,
-.resume-block--project::before {
+.resume-section--experience > .resume-block::before,
+.resume-section--projects > .resume-block::before {
   content: "";
   position: absolute;
   left: 17.4mm;
@@ -385,8 +381,8 @@ a {
   background: #acc4d2;
 }
 
-.resume-block--job::after,
-.resume-block--project::after {
+.resume-section--experience > .resume-block::after,
+.resume-section--projects > .resume-block::after {
   content: "";
   position: absolute;
   left: 16.75mm;
@@ -399,8 +395,8 @@ a {
 
 /* `@date` renders inline inside an otherwise unclassed `<p>`; select that
    paragraph via :has() to reproduce the old timeline date column. */
-.resume-block--job > p:has(.date),
-.resume-block--project > p:has(.date) {
+.resume-section--experience > .resume-block > p:has(.date),
+.resume-section--projects > .resume-block > p:has(.date) {
   position: absolute;
   left: 0;
   top: 0.25mm;
@@ -413,36 +409,36 @@ a {
   text-transform: uppercase;
 }
 
-.resume-block--job h3,
-.resume-block--project h3 {
+.resume-section--experience h3,
+.resume-section--projects h3 {
   margin: 0 0 0.25mm;
   font-size: 2.88mm;
   font-weight: 740;
 }
 
-.resume-block--job .resume-field--org,
-.resume-block--project .resume-field--org {
+.resume-section--experience .resume-field--org,
+.resume-section--projects .resume-field--org {
   margin: 0 0 0.18mm;
   font-size: 2.36mm;
   color: #2f556c;
   font-weight: 680;
 }
 
-.resume-block--job .resume-field--meta,
-.resume-block--project .resume-field--meta {
+.resume-section--experience .resume-field--meta,
+.resume-section--projects .resume-field--meta {
   margin: 0 0 0.52mm;
   font-size: 2.12mm;
   color: #5f7c90;
 }
 
-.resume-block--job .resume-block__stack,
-.resume-block--project .resume-block__stack {
+.resume-section--experience .resume-block__stack,
+.resume-section--projects .resume-block__stack {
   gap: 0.62mm;
   margin: 0.35mm 0 0.8mm;
 }
 
-.resume-block--job .resume-block__stack-badge,
-.resume-block--project .resume-block__stack-badge {
+.resume-section--experience .resume-block__stack-badge,
+.resume-section--projects .resume-block__stack-badge {
   padding: 0.24mm 0.88mm;
   border: 0.22mm solid #bdd2de;
   border-radius: 999mm;
@@ -452,24 +448,24 @@ a {
   line-height: 1;
 }
 
-.resume-block--job > ul:not(.resume-block__stack),
-.resume-block--project > ul:not(.resume-block__stack) {
+.resume-section--experience > .resume-block > ul:not(.resume-block__stack),
+.resume-section--projects > .resume-block > ul:not(.resume-block__stack) {
   margin-top: 0.55mm;
   padding-left: 2.6mm;
 }
 
-.resume-block--job > ul:not(.resume-block__stack) > li,
-.resume-block--project > ul:not(.resume-block__stack) > li {
+.resume-section--experience > .resume-block > ul:not(.resume-block__stack) > li,
+.resume-section--projects > .resume-block > ul:not(.resume-block__stack) > li {
   margin-bottom: 0.38mm;
   color: #415d6f;
 }
 
-.resume-block--summary .resume-field--summary {
+.resume-section--summary .resume-field--summary {
   color: #38596d;
   line-height: 1.5;
 }
 
-.resume-block--summary blockquote {
+.resume-section--summary blockquote {
   margin-top: 1.2mm;
 }
 
