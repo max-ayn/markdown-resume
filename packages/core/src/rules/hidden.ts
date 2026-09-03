@@ -26,7 +26,9 @@ function hiddenRule(
 
   const nextChar = state.src[pos + marker.length];
   if (
-    nextChar !== undefined && nextChar !== " " && nextChar !== "\n" &&
+    nextChar !== undefined &&
+    nextChar !== " " &&
+    nextChar !== "\n" &&
     nextChar !== "\r"
   ) {
     return false;

@@ -18,7 +18,9 @@ custom:
   expect(issues).toEqual([]);
   expect(html).toContain('<h2 class="name">Jane Doe</h2>');
   expect(html).toContain("resume-block--title");
-  expect(html).toContain('<div class="resume-field resume-field--subtitle">Senior Engineer</div>');
+  expect(html).toContain(
+    '<div class="resume-field resume-field--subtitle">Senior Engineer</div>',
+  );
 });
 
 it("drops @hidden lines", () => {
@@ -28,7 +30,9 @@ it("drops @hidden lines", () => {
 });
 
 it("flags unknown markers and unknown image keys", () => {
-  const { issues } = renderMarkdown("@bogus not a real marker\n\n@image missing\n");
+  const { issues } = renderMarkdown(
+    "@bogus not a real marker\n\n@image missing\n",
+  );
   expect(issues.length).toBe(2);
   expect(issues[0].message).toContain('unknown marker "bogus"');
   expect(issues[1].message).toContain('unknown image key "missing"');

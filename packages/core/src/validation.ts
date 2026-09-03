@@ -62,9 +62,8 @@ function validateDateMarkers(
   issues: ValidationIssue[],
 ): void {
   const re = /@date(?::([A-Za-z0-9_-]+))?/g;
-  let match: RegExpExecArray | null;
 
-  while ((match = re.exec(content))) {
+  for (const match of content.matchAll(re)) {
     const key = match[1];
     if (key && !dateKeys.has(key)) {
       const line = content.slice(0, match.index).split(/\r?\n/).length;
@@ -74,8 +73,8 @@ function validateDateMarkers(
 }
 
 function getDeclaredSections(data: FrontmatterData): string[] {
-  return Object.values(data.regions ?? {}).flatMap((region) =>
-    region.sections ?? []
+  return Object.values(data.regions ?? {}).flatMap(
+    (region) => region.sections ?? [],
   );
 }
 

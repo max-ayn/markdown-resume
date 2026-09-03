@@ -22,7 +22,7 @@ export type FrontmatterData = {
   font?: {
     family?: string;
   };
-  /** Warn on render if content overflows one physical page. Defaults to true. */
+  /** Warn on render if content overflows one physical page. Defaults to false. */
   single_page?: boolean;
   [key: string]: unknown;
 };

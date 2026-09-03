@@ -15,9 +15,12 @@ function noteRule(
   if (state.src.slice(pos, pos + marker.length) !== marker) return false;
   const nextChar = state.src[pos + marker.length];
   if (
-    nextChar !== undefined && nextChar !== " " && nextChar !== "\n" &&
+    nextChar !== undefined &&
+    nextChar !== " " &&
+    nextChar !== "\n" &&
     nextChar !== "\r"
-  ) return false;
+  )
+    return false;
 
   const content = state.src.slice(pos + marker.length, max).trim();
   if (!content) return false;

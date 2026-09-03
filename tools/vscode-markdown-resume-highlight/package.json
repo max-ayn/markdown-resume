@@ -1,0 +1,20 @@
+{
+  "name": "markdown-resume-highlight",
+  "displayName": "Markdown Resume Highlight",
+  "description": "Syntax highlighting for markdown-resume's @directives and :::block{} syntax",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "contributes": {
+    "grammars": [
+      {
+        "scopeName": "markdown-resume.injection",
+        "path": "./syntaxes/injection.json",
+        "injectTo": [
+          "text.html.markdown"
+        ]
+      }
+    ]
+  }
+}

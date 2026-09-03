@@ -1,7 +1,7 @@
-import { expect, it } from "vitest";
-import { mkdtemp, writeFile, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { expect, it } from "vitest";
 import { run } from "./cli.ts";
 
 async function tempDir(prefix: string): Promise<string> {
@@ -104,7 +104,11 @@ it("run -w re-renders when the markdown file changes", async () => {
   await waitForFileContent(join(outDir, "resume.html"), "First version");
 
   await writeFile(mdPath, "# Jane Doe\n\nSecond version\n");
-  await waitForFileContent(join(outDir, "resume.html"), "Second version", 15000);
+  await waitForFileContent(
+    join(outDir, "resume.html"),
+    "Second version",
+    15000,
+  );
 }, 25000);
 
 async function waitForFileContent(
@@ -156,7 +160,7 @@ it("generate-style adds an empty rule for each class used in the resume, alongsi
   const outDir = await tempDir("cli-test-generate-style-classes-out-");
 
   await writeFile(
-    dir + "/resume.md",
+    `${dir}/resume.md`,
     `# Jane Doe
 
 ## Summary

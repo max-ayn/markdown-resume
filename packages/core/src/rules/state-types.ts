@@ -18,7 +18,11 @@ export interface Token {
   attrJoin(name: string, value: string): void;
 }
 
-export function makeToken(type: string, tag: string, nesting: -1 | 0 | 1): Token {
+export function makeToken(
+  type: string,
+  tag: string,
+  nesting: -1 | 0 | 1,
+): Token {
   const attrs: [string, string][] = [];
   return {
     type,

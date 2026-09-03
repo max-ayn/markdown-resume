@@ -80,6 +80,25 @@ id and the frontmatter `regions.*.sections` map. See
 [YAML → regions](/reference/frontmatter-config#regions).
 :::
 
+## Embedded styles
+
+Since `markdown-it` parses with `html: true`, a raw `<style>` block anywhere
+in the document is passed straight through into the rendered HTML — no
+external `.css` file is required. Multiple `<style>` blocks are all kept, so
+you can split rules across the document if you want.
+
+```md
+# Jane Doe {.name}
+
+<style>
+.name { color: teal; }
+</style>
+```
+
+An external stylesheet (auto-discovered `.css` file, or `-style <path>`) is
+still supported and applies **in addition to** any embedded `<style>` —
+they're not mutually exclusive. See [CLI reference → Render](/guide/getting-started#render).
+
 ## Full example
 
 ```md

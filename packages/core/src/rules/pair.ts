@@ -14,12 +14,17 @@ function pairRule(
   if (state.src.slice(pos, pos + marker.length) !== marker) return false;
 
   const nextChar = state.src[pos + marker.length];
-  if (nextChar !== undefined && nextChar !== " " && nextChar !== "\n" && nextChar !== "\r") {
+  if (
+    nextChar !== undefined &&
+    nextChar !== " " &&
+    nextChar !== "\n" &&
+    nextChar !== "\r"
+  ) {
     return false;
   }
 
   const rest = state.src.slice(pos + marker.length, max).trim();
-  if (!rest || !rest.includes("|")) return false;
+  if (!rest?.includes("|")) return false;
 
   if (silent) return true;
 
@@ -39,12 +44,17 @@ export default function pairPlugin(md: MarkdownIt): void {
   });
 
   md.renderer.rules.pair = (tokens, idx) => {
-    const { label, value } = tokens[idx].meta as { label: string; value: string };
+    const { label, value } = tokens[idx].meta as {
+      label: string;
+      value: string;
+    };
     const labelHtml = md.renderInline(label);
     const valueHtml = md.renderInline(value);
 
     const numericValue = parseFloat(value);
-    const style = Number.isFinite(numericValue) ? ` style="--pair-value: ${numericValue}%"` : "";
+    const style = Number.isFinite(numericValue)
+      ? ` style="--pair-value: ${numericValue}%"`
+      : "";
 
     return `<div class="resume-pair" data-value="${md.utils.escapeHtml(value)}"${style}><span class="resume-pair__label">${labelHtml}</span><span class="resume-pair__value">${valueHtml}</span></div>\n`;
   };

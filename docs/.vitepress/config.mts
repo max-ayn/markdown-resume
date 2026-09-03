@@ -5,7 +5,7 @@ export default defineConfig({
   base: process.env.CI ? '/markdown-resume/' : '/',
   title: '*.md Resume',
   description: 'Generate resumes from semantic Markdown + CSS into HTML and PDF.',
-  head: [['link', { rel: 'icon', type: 'image/png', href: '/logo.svg' }]],
+  head: [['link', { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }]],
   vite: {
     plugins: [llmstxt()],
   },

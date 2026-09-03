@@ -12,11 +12,16 @@ type OverflowPage = {
     html: string,
     options: { waitUntil: "load" | "domcontentloaded" | "networkidle" },
   ): Promise<void>;
-  evaluate<R, Arg>(pageFunction: string | ((arg: Arg) => R), arg?: Arg): Promise<R>;
+  evaluate<R, Arg>(
+    pageFunction: string | ((arg: Arg) => R),
+    arg?: Arg,
+  ): Promise<R>;
 };
 
 type OverflowBrowser = {
-  newPage(options: { viewport: { width: number; height: number } }): Promise<OverflowPage>;
+  newPage(options: {
+    viewport: { width: number; height: number };
+  }): Promise<OverflowPage>;
   close(): Promise<void>;
 };
 
@@ -36,36 +41,39 @@ export type OverflowMeasurement = {
  * (`pageHeightMm` tall). Runs inside the browser via `page.evaluate` — must
  * stay a plain function with no outer closures.
  */
-export function measureContentHeights(
-  pageHeightMm: number,
-): { contentHeightPx: number; pageHeightPx: number } {
-  const doc = (globalThis as unknown as {
-    document: {
-      querySelector(selector: string): {
-        scrollHeight: number;
-        offsetHeight: number;
-        getBoundingClientRect(): { height: number };
-      } | null;
-      documentElement: { scrollHeight: number };
-      body: {
-        scrollHeight: number;
-        appendChild(node: unknown): void;
+export function measureContentHeights(pageHeightMm: number): {
+  contentHeightPx: number;
+  pageHeightPx: number;
+} {
+  const doc = (
+    globalThis as unknown as {
+      document: {
+        querySelector(selector: string): {
+          scrollHeight: number;
+          offsetHeight: number;
+          getBoundingClientRect(): { height: number };
+        } | null;
+        documentElement: { scrollHeight: number };
+        body: {
+          scrollHeight: number;
+          appendChild(node: unknown): void;
+        };
+        createElement(tag: string): {
+          style: Record<string, string>;
+          getBoundingClientRect(): { height: number };
+          remove(): void;
+        };
       };
-      createElement(tag: string): {
-        style: Record<string, string>;
-        getBoundingClientRect(): { height: number };
-        remove(): void;
-      };
-    };
-  }).document;
+    }
+  ).document;
 
   const pageEl = doc.querySelector(".page");
   const contentHeightPx = pageEl
     ? Math.max(
-      pageEl.scrollHeight,
-      pageEl.offsetHeight,
-      pageEl.getBoundingClientRect().height,
-    )
+        pageEl.scrollHeight,
+        pageEl.offsetHeight,
+        pageEl.getBoundingClientRect().height,
+      )
     : Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
 
   const probe = doc.createElement("div");
@@ -98,7 +106,9 @@ export async function measurePageOverflow(
   const browser = await engine.launch();
 
   try {
-    const page = await browser.newPage({ viewport: { width: 794, height: 1123 } });
+    const page = await browser.newPage({
+      viewport: { width: 794, height: 1123 },
+    });
     await page.emulateMedia({ media: "print" });
     if (options.sourceHtmlPath && options.sourceHtmlPath.trim().length > 0) {
       const sourceUrl = pathToFileURL(resolve(options.sourceHtmlPath)).href;

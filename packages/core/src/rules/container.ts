@@ -3,22 +3,26 @@ import type { StateBlock, Token } from "./state-types.ts";
 
 const OPEN_RE = /^:::([a-zA-Z0-9_-]+)?(?:\{([^}]*)\})?\s*$/;
 
-function parseAttrs(
-  raw?: string,
-): { classes: string[]; attrs: [string, string][] } {
+function parseAttrs(raw?: string): {
+  classes: string[];
+  attrs: [string, string][];
+} {
   const classes: string[] = [];
   const attrs: [string, string][] = [];
   if (!raw) return { classes, attrs };
 
-  raw.trim().split(/\s+/).forEach((token) => {
-    if (!token) return;
-    if (token.startsWith(".")) {
-      classes.push(token.slice(1));
-    } else if (token.includes("=")) {
-      const [key, ...rest] = token.split("=");
-      attrs.push([key, rest.join("=").replace(/^"|"$/g, "")]);
-    }
-  });
+  raw
+    .trim()
+    .split(/\s+/)
+    .forEach((token) => {
+      if (!token) return;
+      if (token.startsWith(".")) {
+        classes.push(token.slice(1));
+      } else if (token.includes("=")) {
+        const [key, ...rest] = token.split("=");
+        attrs.push([key, rest.join("=").replace(/^"|"$/g, "")]);
+      }
+    });
 
   return { classes, attrs };
 }

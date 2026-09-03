@@ -1,6 +1,6 @@
+import { format, isValid, parse } from "date-fns";
 import type MarkdownIt from "markdown-it";
 import type { StateInline } from "./state-types.ts";
-import { format, isValid, parse } from "date-fns";
 
 type DateConfig = {
   formats?: Record<string, string>;
@@ -63,12 +63,9 @@ function renderDate(
 ): string {
   const { formats, default: defaultFormat } = getFormats(env);
   const parsed = parseDateValue(raw);
-  const outputFormat = key ? formats[key] ?? defaultFormat : defaultFormat;
-  const value = parsed === "today"
-    ? raw
-    : parsed
-    ? format(parsed, outputFormat)
-    : raw;
+  const outputFormat = key ? (formats[key] ?? defaultFormat) : defaultFormat;
+  const value =
+    parsed === "today" ? raw : parsed ? format(parsed, outputFormat) : raw;
   const className = key ? `date date-${key}` : "date";
   return `<span class="${className}">${md.utils.escapeHtml(value)}</span>`;
 }
@@ -92,15 +89,22 @@ function dateRule(state: StateInline, silent: boolean): boolean {
   }
 
   if (
-    pos < state.posMax && src[pos] !== " " && src[pos] !== "\n" &&
+    pos < state.posMax &&
+    src[pos] !== " " &&
+    src[pos] !== "\n" &&
     src[pos] !== "\r"
-  ) return false;
+  )
+    return false;
   while (pos < state.posMax && src[pos] === " ") pos++;
 
   const rawStart = pos;
   while (
-    pos < state.posMax && src[pos] !== "|" && src[pos] !== "–" &&
-    src[pos] !== "—" && src[pos] !== "\n" && src[pos] !== "\r" &&
+    pos < state.posMax &&
+    src[pos] !== "|" &&
+    src[pos] !== "–" &&
+    src[pos] !== "—" &&
+    src[pos] !== "\n" &&
+    src[pos] !== "\r" &&
     // A " - " is a range separator between two @date directives, but a bare
     // "-" must stay available for the "yyyy-MM-dd" input format.
     !(src[pos] === "-" && src[pos - 1] === " " && src[pos + 1] === " ")

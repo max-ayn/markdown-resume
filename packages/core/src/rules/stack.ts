@@ -15,16 +15,22 @@ function stackRule(
   if (state.src.slice(pos, pos + marker.length) !== marker) return false;
   const nextChar = state.src[pos + marker.length];
   if (
-    nextChar !== undefined && nextChar !== " " && nextChar !== "\n" &&
+    nextChar !== undefined &&
+    nextChar !== " " &&
+    nextChar !== "\n" &&
     nextChar !== "\r"
-  ) return false;
+  )
+    return false;
 
   const line = state.src.slice(pos + marker.length, max).trim();
   if (!line) return false;
 
   if (silent) return true;
 
-  const items = line.split(",").map((s) => s.trim()).filter(Boolean);
+  const items = line
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   const openToken = state.push("stack_open", "ul", 1);
   openToken.attrSet("class", "resume-block__stack stack-list");
@@ -48,5 +54,6 @@ export default function stackPlugin(md: MarkdownIt): void {
     alt: ["paragraph", "reference", "blockquote", "list"],
   });
 
-  md.renderer.rules.stack_item_open = () => '<li class="resume-block__stack-badge">';
+  md.renderer.rules.stack_item_open = () =>
+    '<li class="resume-block__stack-badge">';
 }

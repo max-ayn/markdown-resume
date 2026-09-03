@@ -24,7 +24,8 @@ export const ICON_PROVIDERS: IconProviders = {
       `https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/svgs/brands/${icon}.svg`,
   },
   feather: {
-    url: (icon) => `https://cdn.jsdelivr.net/npm/feather-icons/icons/${icon}.svg`,
+    url: (icon) =>
+      `https://cdn.jsdelivr.net/npm/feather-icons/icons/${icon}.svg`,
   },
 };
 
@@ -48,16 +49,20 @@ export function makeIconPlugin(providers: IconProviders) {
       if (state.src[cursor] === ":") {
         cursor++;
         const keyStart = cursor;
-        while (cursor < max && /[a-zA-Z0-9_-]/.test(state.src[cursor])) cursor++;
+        while (cursor < max && /[a-zA-Z0-9_-]/.test(state.src[cursor]))
+          cursor++;
         provider = state.src.slice(keyStart, cursor);
         if (!provider) return false;
       }
 
       const nextChar = state.src[cursor];
       if (
-        nextChar !== undefined && nextChar !== " " && nextChar !== "\n" &&
+        nextChar !== undefined &&
+        nextChar !== " " &&
+        nextChar !== "\n" &&
         nextChar !== "\r"
-      ) return false;
+      )
+        return false;
 
       const rest = state.src.slice(cursor, max).trim();
       if (!rest) return false;
@@ -88,9 +93,10 @@ export function makeIconPlugin(providers: IconProviders) {
         text: string | null;
       };
 
-      const iconHtml = provider && providers[provider]
-        ? `<img src="${providers[provider].url(icon)}" class="icon icon-${provider}" alt="${icon}" />`
-        : `<span class="resume-block__icon material-symbols-outlined" data-icon="${md.utils.escapeHtml(icon)}">${md.utils.escapeHtml(icon)}</span>`;
+      const iconHtml =
+        provider && providers[provider]
+          ? `<img src="${providers[provider].url(icon)}" class="icon icon-${provider}" alt="${icon}" />`
+          : `<span class="resume-block__icon material-symbols-outlined" data-icon="${md.utils.escapeHtml(icon)}">${md.utils.escapeHtml(icon)}</span>`;
 
       if (text) {
         const textHtml = md.renderInline(text);

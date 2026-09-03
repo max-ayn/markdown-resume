@@ -122,13 +122,12 @@ stylesheets:
 
 ## `single_page`
 
-Type: `boolean`, default `true`. When rendering, the CLI estimates the
-content height against the configured `page.size` (default `A4`) and warns
-on stdout if it overflows a single physical page. Set to `false` to opt out
-of this check for resumes that intentionally span multiple pages.
+Type: `boolean`, default `false`. Set to `true` to have the CLI estimate the
+content height against the configured `page.size` (default `A4`) and warn on
+stdout if it overflows a single physical page.
 
 ```yaml
-single_page: false
+single_page: true
 ```
 
 ## `regions`

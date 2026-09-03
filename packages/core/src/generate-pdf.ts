@@ -1,6 +1,7 @@
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
 import { mkdir, readFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
+import process from "node:process";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 import { measureContentHeights } from "./measure-overflow.ts";
 
@@ -14,7 +15,10 @@ type PdfPage = {
     html: string,
     options: { waitUntil: "load" | "domcontentloaded" | "networkidle" },
   ): Promise<void>;
-  evaluate<R, Arg>(pageFunction: string | ((arg: Arg) => R), arg?: Arg): Promise<R>;
+  evaluate<R, Arg>(
+    pageFunction: string | ((arg: Arg) => R),
+    arg?: Arg,
+  ): Promise<R>;
   pdf(options: {
     path: string;
     format: string;
@@ -27,7 +31,9 @@ type PdfPage = {
 };
 
 type PdfBrowser = {
-  newPage(options: { viewport: { width: number; height: number } }): Promise<PdfPage>;
+  newPage(options: {
+    viewport: { width: number; height: number };
+  }): Promise<PdfPage>;
   close(): Promise<void>;
 };
 
@@ -91,13 +97,11 @@ export class HtmlToPdfGenerator {
         await page.setContent(html, { waitUntil: "networkidle" });
       }
       if (options.title) {
-        await page.evaluate(
-          (title) => {
-            (globalThis as unknown as { document: { title: string } }).document
-              .title = title;
-          },
-          options.title,
-        );
+        await page.evaluate((title) => {
+          (
+            globalThis as unknown as { document: { title: string } }
+          ).document.title = title;
+        }, options.title);
       }
       await page.evaluate("document.fonts.ready");
       const { contentHeightPx, pageHeightPx: a4HeightPx } = await page.evaluate(
@@ -107,12 +111,13 @@ export class HtmlToPdfGenerator {
       const estimatedPages = contentHeightPx / Math.max(a4HeightPx, 1);
       // Only auto-shrink when content is effectively single-page.
       // For multi-page documents, keep scale=1 to avoid a narrow "shrunk" layout.
-      const scale = estimatedPages > 1.02
-        ? 1
-        : Math.min(
-          1,
-          Math.max(0.55, a4HeightPx / Math.max(contentHeightPx, 1)),
-        );
+      const scale =
+        estimatedPages > 1.02
+          ? 1
+          : Math.min(
+              1,
+              Math.max(0.55, a4HeightPx / Math.max(contentHeightPx, 1)),
+            );
       const format = options.pageFormat?.trim() || "A4";
       const margin = options.pageMargin?.trim() || "0";
       await page.pdf({
@@ -130,13 +135,17 @@ export class HtmlToPdfGenerator {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   const rootPath = dirname(dirname(fileURLToPath(import.meta.url)));
-  const htmlContent = await readFile(join(rootPath, "out", "resume.html"), "utf-8");
-  const generator = new HtmlToPdfGenerator();
-  await generator.generate(
-    htmlContent,
-    join(rootPath, "out", "resume.pdf"),
-    { title: "Resume" },
+  const htmlContent = await readFile(
+    join(rootPath, "out", "resume.html"),
+    "utf-8",
   );
+  const generator = new HtmlToPdfGenerator();
+  await generator.generate(htmlContent, join(rootPath, "out", "resume.pdf"), {
+    title: "Resume",
+  });
 }

@@ -78,6 +78,11 @@ When `-md` (or `-style`) is omitted, the CLI looks for a single `.md` (or
 - more than one match → error, listing the candidates, asking you to pass
   `-md`/`-style` explicitly
 
+A `.css` file is optional — a `<style>` tag [embedded directly in the
+markdown](/reference/markdown/#embedded-styles) is rendered as-is even with
+no stylesheet found in `-i` at all. If both exist, the external stylesheet
+and the embedded `<style>` both apply.
+
 ::: code-group
 
 ```bash [Explicit files]

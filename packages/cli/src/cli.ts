@@ -1,13 +1,23 @@
-import { basename, dirname, extname, join, relative, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import { mkdir, mkdtemp, readFile, readdir, rm, stat, copyFile, writeFile } from "node:fs/promises";
 import { watch } from "node:fs";
-import { tmpdir } from "node:os";
 import {
+  copyFile,
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { basename, dirname, extname, join, relative, resolve } from "node:path";
+import process from "node:process";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  type FrontmatterData,
   HtmlToPdfGenerator,
   measurePageOverflow,
   renderMarkdown,
-  type FrontmatterData,
 } from "@markdown-resume/core";
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -74,9 +84,9 @@ async function resolveInputMarkdownPath(
   }
   if (matches.length > 1) {
     throw new Error(
-      `Multiple markdown files found in ${inputFolder} (${
-        matches.join(", ")
-      }); pass -md <filename> to disambiguate.`,
+      `Multiple markdown files found in ${inputFolder} (${matches.join(
+        ", ",
+      )}); pass -md <filename> to disambiguate.`,
     );
   }
   return resolve(inputFolder, matches[0]);
@@ -85,18 +95,20 @@ async function resolveInputMarkdownPath(
 async function resolveStylePath(
   inputFolder: string,
   styleFlag: string | null,
-): Promise<string> {
+): Promise<string | null> {
   if (styleFlag) return resolve(inputFolder, styleFlag);
 
   const matches = await findFilesByExtension(inputFolder, ".css");
   if (matches.length === 0) {
-    throw new Error(`No stylesheet found in ${inputFolder}.`);
+    // ponytail: no external stylesheet is fine — markdown-it passes a
+    // `<style>` block embedded in the markdown straight through as-is.
+    return null;
   }
   if (matches.length > 1) {
     throw new Error(
-      `Multiple stylesheets found in ${inputFolder} (${
-        matches.join(", ")
-      }); pass -style <path> to disambiguate.`,
+      `Multiple stylesheets found in ${inputFolder} (${matches.join(
+        ", ",
+      )}); pass -style <path> to disambiguate.`,
     );
   }
   return resolve(inputFolder, matches[0]);
@@ -122,7 +134,7 @@ function normalizeStylesheetListValue(raw: unknown): string[] {
 
   if (raw && typeof raw === "object") {
     return Object.values(raw as Record<string, unknown>).flatMap((value) =>
-      normalizeStylesheetListValue(value)
+      normalizeStylesheetListValue(value),
     );
   }
 
@@ -146,9 +158,7 @@ function extractPrimaryFontName(raw: unknown): string | null {
   return null;
 }
 
-function collectStylesheetUrls(
-  rawConfig: Record<string, unknown>,
-): string[] {
+function collectStylesheetUrls(rawConfig: Record<string, unknown>): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
 
@@ -176,13 +186,15 @@ const PAGE_DIMENSIONS_MM: Record<string, { width: number; height: number }> = {
   LEGAL: { width: 215.9, height: 355.6 },
 };
 
-function resolvePageDimensionsMm(
-  size: string,
-): { width: number; height: number } {
+function resolvePageDimensionsMm(size: string): {
+  width: number;
+  height: number;
+} {
   return PAGE_DIMENSIONS_MM[size.trim().toUpperCase()] ?? PAGE_DIMENSIONS_MM.A4;
 }
 
-const DEFAULT_FONT_FALLBACK_STACK = '"Avenir Next", "Segoe UI", Arial, sans-serif';
+const DEFAULT_FONT_FALLBACK_STACK =
+  '"Avenir Next", "Segoe UI", Arial, sans-serif';
 
 function buildHtmlDocument(
   content: string,
@@ -200,9 +212,8 @@ function buildHtmlDocument(
     .join("\n    ");
   const pageSize = options.page?.size?.trim() || "A4";
   const pageMargin = formatPageMargin(options.page?.margin);
-  const { width: pageWidthMm, height: pageHeightMm } = resolvePageDimensionsMm(
-    pageSize,
-  );
+  const { width: pageWidthMm, height: pageHeightMm } =
+    resolvePageDimensionsMm(pageSize);
   const fontName = options.font?.family?.trim();
   const fontFamilyRule = fontName
     ? `body { font-family: "${fontName}", ${DEFAULT_FONT_FALLBACK_STACK}; }`
@@ -267,9 +278,13 @@ function inferMimeType(path: string): string {
 
 function isExternalOrAbsolutePath(path: string): boolean {
   const value = path.trim();
-  return value.startsWith("/") || value.startsWith("http://") ||
-    value.startsWith("https://") || value.startsWith("data:") ||
-    value.startsWith("file:");
+  return (
+    value.startsWith("/") ||
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("data:") ||
+    value.startsWith("file:")
+  );
 }
 
 function splitPathAndSuffix(value: string): { path: string; suffix: string } {
@@ -312,7 +327,8 @@ async function rewriteAssetPaths(
   return rewriteMatches(
     withImagesRewritten,
     /url\(\s*(['"]?)([^'")]+)\1\s*\)/g,
-    (match, resolved) => `url(${match[1] ?? ""}${escapeHtml(resolved)}${match[1] ?? ""})`,
+    (match, resolved) =>
+      `url(${match[1] ?? ""}${escapeHtml(resolved)}${match[1] ?? ""})`,
   );
 }
 
@@ -333,9 +349,9 @@ async function inlineLocalAssetUrlsForPdf(
       const stats = await stat(resolved);
       if (!stats.isFile()) return null;
       const bytes = await readFile(resolved);
-      const dataUri = `data:${inferMimeType(resolved)};base64,${
-        bytes.toString("base64")
-      }`;
+      const dataUri = `data:${inferMimeType(resolved)};base64,${bytes.toString(
+        "base64",
+      )}`;
       cache.set(resolved, dataUri);
       return dataUri;
     } catch {
@@ -383,9 +399,9 @@ async function materializeLocalImageAssets(
         const dot = originalName.lastIndexOf(".");
         if (dot === -1) assetName = `${originalName}-${counter}`;
         else {
-          assetName = `${originalName.slice(0, dot)}-${counter}${
-            originalName.slice(dot)
-          }`;
+          assetName = `${originalName.slice(0, dot)}-${counter}${originalName.slice(
+            dot,
+          )}`;
         }
         counter += 1;
       }
@@ -401,9 +417,10 @@ async function materializeLocalImageAssets(
 
   for (const missingSource of missingSources) {
     console.warn(
-      `Image source not found: ${
-        relative(ROOT, missingSource)
-      } (from ${markdownPath})`,
+      `Image source not found: ${relative(
+        ROOT,
+        missingSource,
+      )} (from ${markdownPath})`,
     );
   }
   return result;
@@ -451,7 +468,9 @@ async function watchAndRerender(flags: GlobalFlags): Promise<void> {
   // ponytail: recursive fs.watch is macOS/Windows-only; add a directory
   // walker + per-file watchers if Linux support is ever needed.
   watch(watchFolder, { recursive: true }, scheduleRerender);
-  console.log(`Watching ${relative(ROOT, watchFolder)} for changes... (ctrl-c to stop)`);
+  console.log(
+    `Watching ${relative(ROOT, watchFolder)} for changes... (ctrl-c to stop)`,
+  );
   await rerender();
   await new Promise<never>(() => {});
 }
@@ -462,8 +481,10 @@ function buildResumeHtmlDocument(
   css: string,
 ): string {
   const lang = typeof data.lang === "string" ? data.lang : "en";
-  const fontFamily = data.font?.family?.trim() ||
-    extractPrimaryFontName(data.fonts) || undefined;
+  const fontFamily =
+    data.font?.family?.trim() ||
+    extractPrimaryFontName(data.fonts) ||
+    undefined;
 
   return buildHtmlDocument(htmlFragment, css, {
     lang,
@@ -473,24 +494,27 @@ function buildResumeHtmlDocument(
   });
 }
 
-/** Warns on stdout if `html` overflows a single physical page. No-op when `single_page: false`. Returns whether it warned. */
+/** Warns on stdout if `html` overflows a single physical page. Only runs when `single_page: true`. Returns whether it warned. */
 async function warnIfOverflowing(
   data: FrontmatterData,
   html: string,
   sourceHtmlPath: string,
 ): Promise<boolean> {
-  if (data.single_page === false) return false;
+  if (data.single_page !== true) return false;
 
   const { height: pageHeightMm } = resolvePageDimensionsMm(
     data.page?.size?.trim() || "A4",
   );
-  const overflow = await measurePageOverflow(html, { pageHeightMm, sourceHtmlPath });
+  const overflow = await measurePageOverflow(html, {
+    pageHeightMm,
+    sourceHtmlPath,
+  });
   if (overflow.overflowRatio <= 0.02) return false;
 
   console.log(
-    `Warning: content overflows a single page by ${
-      Math.round(overflow.overflowRatio * 100)
-    }% (~${overflow.estimatedPages.toFixed(2)} pages). Set single_page: false in frontmatter to allow multi-page output.`,
+    `Warning: content overflows a single page by ${Math.round(
+      overflow.overflowRatio * 100,
+    )}% (~${overflow.estimatedPages.toFixed(2)} pages).`,
   );
   return true;
 }
@@ -511,10 +535,12 @@ async function renderOnce(flags: GlobalFlags): Promise<void> {
   const { data, html: htmlFragment, issues } = renderMarkdown(markdown);
   console.log(`Validation: ${issues.length} issue(s)`);
   for (const issue of issues) {
-    console.log(`  ${issue.line ? `line ${issue.line}: ` : ""}${issue.message}`);
+    console.log(
+      `  ${issue.line ? `line ${issue.line}: ` : ""}${issue.message}`,
+    );
   }
 
-  const css = await readFile(stylePath, "utf-8");
+  const css = stylePath ? await readFile(stylePath, "utf-8") : "";
   const htmlDocument = buildResumeHtmlDocument(data, htmlFragment, css);
   const htmlWithLocalAssets = await materializeLocalImageAssets(
     htmlDocument,
@@ -531,7 +557,10 @@ async function renderOnce(flags: GlobalFlags): Promise<void> {
   if (!wantsPdf) return;
 
   const pdfGenerator = new HtmlToPdfGenerator();
-  const pdfHtmlWithBase = injectBaseHref(htmlWithLocalAssets, dirname(outputHtml));
+  const pdfHtmlWithBase = injectBaseHref(
+    htmlWithLocalAssets,
+    dirname(outputHtml),
+  );
   const pdfHtml = await inlineLocalAssetUrlsForPdf(
     pdfHtmlWithBase,
     dirname(outputHtml),
@@ -553,19 +582,19 @@ async function runCheck(args: string[]): Promise<void> {
 
   console.log(`Validation: ${issues.length} issue(s)`);
   for (const issue of issues) {
-    console.log(`  ${issue.line ? `line ${issue.line}: ` : ""}${issue.message}`);
+    console.log(
+      `  ${issue.line ? `line ${issue.line}: ` : ""}${issue.message}`,
+    );
   }
   if (issues.length > 0) process.exitCode = 1;
 
-  if (data.single_page === false) return;
+  if (data.single_page !== true) return;
 
-  let css = "";
-  try {
-    const stylePath = await resolveStylePath(await resolveInputFolder(inputFolder), null);
-    css = await readFile(stylePath, "utf-8");
-  } catch {
-    // No stylesheet to check against - measure with the unstyled markup alone.
-  }
+  const stylePath = await resolveStylePath(
+    await resolveInputFolder(inputFolder),
+    null,
+  );
+  const css = stylePath ? await readFile(stylePath, "utf-8") : "";
   const htmlDocument = buildResumeHtmlDocument(data, htmlFragment, css);
 
   const tempDir = await mkdtemp(join(tmpdir(), "markdown-resume-check-"));
@@ -578,7 +607,11 @@ async function runCheck(args: string[]): Promise<void> {
     );
     await writeFile(tempHtmlPath, htmlWithLocalAssets, "utf-8");
 
-    const overflowed = await warnIfOverflowing(data, htmlWithLocalAssets, tempHtmlPath);
+    const overflowed = await warnIfOverflowing(
+      data,
+      htmlWithLocalAssets,
+      tempHtmlPath,
+    );
     if (overflowed) process.exitCode = 1;
   } finally {
     await rm(tempDir, { recursive: true, force: true });
@@ -645,11 +678,12 @@ async function runGenerateStyle(args: string[]): Promise<void> {
     parseGlobalFlags(args);
   const outputPath = resolve(outputFolder, styleFlag ?? "styles.css");
 
-  if (!force && await pathExists(outputPath)) {
+  if (!force && (await pathExists(outputPath))) {
     throw new Error(
-      `${
-        relative(ROOT, outputPath)
-      } already exists; pass -style <name> to write elsewhere, or -f to overwrite.`,
+      `${relative(
+        ROOT,
+        outputPath,
+      )} already exists; pass -style <name> to write elsewhere, or -f to overwrite.`,
     );
   }
 
@@ -666,7 +700,9 @@ async function runGenerateStyle(args: string[]): Promise<void> {
 
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, content, "utf-8");
-  console.log(`Stylesheet boilerplate written to ${relative(ROOT, outputPath)}`);
+  console.log(
+    `Stylesheet boilerplate written to ${relative(ROOT, outputPath)}`,
+  );
 }
 
 export async function run(
@@ -686,7 +722,10 @@ export async function run(
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   run().catch((error) => {
     console.error(error instanceof Error ? error.message : error);
     process.exit(1);

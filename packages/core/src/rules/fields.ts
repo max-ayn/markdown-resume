@@ -11,7 +11,7 @@ const DEFAULT_FIELD_NAMES = ["title", "subtitle", "summary"] as const;
 
 function getFieldNames(env: FieldsEnv): string[] {
   const names = env.custom?.field?.filter(Boolean);
-  return names && names.length ? names : [...DEFAULT_FIELD_NAMES];
+  return names?.length ? names : [...DEFAULT_FIELD_NAMES];
 }
 
 function fieldRule(
@@ -24,8 +24,8 @@ function fieldRule(
   const max = state.eMarks[startLine];
   const line = state.src.slice(pos, max);
 
-  const names = getFieldNames(state.env as FieldsEnv).sort((a, b) =>
-    b.length - a.length
+  const names = getFieldNames(state.env as FieldsEnv).sort(
+    (a, b) => b.length - a.length,
   );
   const match = names.find((name) => line.startsWith(`@${name}`));
   if (!match) return false;
@@ -33,9 +33,12 @@ function fieldRule(
   const marker = `@${match}`;
   const nextChar = line[marker.length];
   if (
-    nextChar !== undefined && nextChar !== " " && nextChar !== "\n" &&
+    nextChar !== undefined &&
+    nextChar !== " " &&
+    nextChar !== "\n" &&
     nextChar !== "\r"
-  ) return false;
+  )
+    return false;
 
   const content = line.slice(marker.length).trim();
   if (!content) return false;

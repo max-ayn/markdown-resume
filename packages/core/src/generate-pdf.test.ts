@@ -1,7 +1,7 @@
-import { expect, it } from "vitest";
-import { mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { expect, it } from "vitest";
 import { HtmlToPdfGenerator } from "./generate-pdf.ts";
 
 async function withTempDir(fn: (dir: string) => Promise<void>) {
@@ -39,7 +39,12 @@ function createMockGenerator(params: {
     async evaluate(arg: unknown) {
       calls.evaluateArgs.push(arg);
       if (typeof arg === "function") {
-        return params.measuredHeights ?? { contentHeightPx: 1123, pageHeightPx: 1123 };
+        return (
+          params.measuredHeights ?? {
+            contentHeightPx: 1123,
+            pageHeightPx: 1123,
+          }
+        );
       }
       return undefined;
     },

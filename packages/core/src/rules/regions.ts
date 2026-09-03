@@ -1,7 +1,7 @@
 import type MarkdownIt from "markdown-it";
+import type { FrontmatterData } from "../types.ts";
 import type { StateCore, Token } from "./state-types.ts";
 import { makeToken } from "./state-types.ts";
-import type { FrontmatterData } from "../types.ts";
 
 type RegionsConfig = FrontmatterData["regions"];
 type RegionsEnv = { regions?: RegionsConfig };
@@ -113,7 +113,12 @@ function nestSubheadings(tokens: Token[], level: number): Token[] {
     const blockOpen = makeToken("container_open", "div", 1);
     blockOpen.attrSet("class", "resume-block");
 
-    out.push(blockOpen, ...heading, ...body, makeToken("container_close", "div", -1));
+    out.push(
+      blockOpen,
+      ...heading,
+      ...body,
+      makeToken("container_close", "div", -1),
+    );
   }
 
   return out;
@@ -148,7 +153,10 @@ export default function regionsPlugin(md: MarkdownIt): void {
 
     // Each run keeps its section id (if any) so it can be reordered to
     // match `regions.<name>.sections`, rather than staying in source order.
-    const entries = new Map<string, Array<{ id: string | null; tokens: Token[] }>>();
+    const entries = new Map<
+      string,
+      Array<{ id: string | null; tokens: Token[] }>
+    >();
     for (let i = 0; i < runStarts.length; i++) {
       const start = runStarts[i];
       const end = runStarts[i + 1] ?? tokens.length;
@@ -157,8 +165,8 @@ export default function regionsPlugin(md: MarkdownIt): void {
 
       const heading = run[0].type === "heading_open" ? run[0] : null;
       const sectionId = heading ? sectionIdOf(heading) : null;
-      const region = (sectionId && sectionRegionMap.get(sectionId)) ||
-        DEFAULT_REGION;
+      const region =
+        (sectionId && sectionRegionMap.get(sectionId)) || DEFAULT_REGION;
 
       const list = entries.get(region) ?? [];
       list.push({ id: sectionId, tokens: nestSubheadings(run, 3) });

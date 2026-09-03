@@ -9,7 +9,7 @@ export default function headingAttrsPlugin(md: MarkdownIt): void {
       if (tokens[i].type !== "heading_open") continue;
 
       const inlineToken = tokens[i + 1];
-      if (!inlineToken || inlineToken.type !== "inline") continue;
+      if (inlineToken?.type !== "inline") continue;
 
       const match = inlineToken.content.match(/\s*\{\.([a-zA-Z0-9_-]+)\}\s*$/);
       if (match) {

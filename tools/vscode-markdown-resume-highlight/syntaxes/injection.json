@@ -1,0 +1,19 @@
+{
+  "scopeName": "markdown-resume.injection",
+  "injectionSelector": "L:text.html.markdown",
+  "patterns": [{ "include": "#directive" }, { "include": "#block-fence" }],
+  "repository": {
+    "directive": {
+      "match": "(@(?:date|icon|image|note|stack|hidden|[a-zA-Z][\\w-]*))\\b",
+      "name": "keyword.control.directive.markdown-resume"
+    },
+    "block-fence": {
+      "match": "(:::)([a-zA-Z][\\w-]*)?(\\{[^}]*\\})?",
+      "captures": {
+        "1": { "name": "punctuation.definition.block.markdown-resume" },
+        "2": { "name": "entity.name.type.block.markdown-resume" },
+        "3": { "name": "meta.attributes.block.markdown-resume" }
+      }
+    }
+  }
+}

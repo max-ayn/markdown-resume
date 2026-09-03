@@ -9,7 +9,10 @@
   "author": "Max Ayn",
   "license": "GPL-3.0",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
     "cli": "tsx packages/cli/src/cli.ts",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
     "test": "pnpm -r --if-present run test",
     "test:types": "pnpm -r --if-present run test:types",
     "docs:dev": "vitepress dev docs",
@@ -17,6 +20,7 @@
     "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.6",
     "@types/node": "^26.0.0",
     "tsx": "^4.23.1",
     "typescript": "^6.0.3",
