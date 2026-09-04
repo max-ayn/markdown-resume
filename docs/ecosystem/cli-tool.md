@@ -4,7 +4,7 @@
 markdown + CSS in, HTML/PDF out.
 
 ```bash
-pnpm run cli -- -i examples/software -o out -pdf
+pnpm run cli -- -i examples/software -o out --with-pdf
 ```
 
 It's part of this repository's pnpm workspace (`packages/cli`) — there's no

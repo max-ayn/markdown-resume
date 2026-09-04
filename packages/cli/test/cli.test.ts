@@ -2,7 +2,7 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { run } from "./cli.ts";
+import { run } from "../src/index.ts";
 
 async function tempDir(prefix: string): Promise<string> {
   return mkdtemp(join(tmpdir(), prefix));
@@ -69,7 +69,7 @@ it("run fails when no markdown file is found", async () => {
   await expect(run(["-i", dir])).rejects.toThrow("No markdown file found");
 });
 
-it("run fails when multiple markdown files are found without -md", async () => {
+it("run fails when multiple markdown files are found without --md", async () => {
   const dir = await tempDir("cli-test-ambiguous-");
   await writeFile(join(dir, "a.md"), "# A\n");
   await writeFile(join(dir, "b.md"), "# B\n");
@@ -79,17 +79,49 @@ it("run fails when multiple markdown files are found without -md", async () => {
   );
 });
 
-it("run disambiguates via -md when multiple markdown files exist", async () => {
+it("run disambiguates via --md when multiple markdown files exist", async () => {
   const dir = await tempDir("cli-test-md-flag-");
   const outDir = await tempDir("cli-test-out-");
   await writeFile(join(dir, "a.md"), "# A\n");
   await writeFile(join(dir, "b.md"), "# B\n");
   await writeFile(join(dir, "styles.css"), "", "utf-8");
 
-  await run(["-i", dir, "-o", outDir, "-md", "b.md"]);
+  await run(["-i", dir, "-o", outDir, "--md", "b.md"]);
 
   const html = await readFile(join(outDir, "b.html"), "utf-8");
   expect(html).toContain("B");
+});
+
+it("run disambiguates via -m/-s single-char aliases", async () => {
+  const dir = await tempDir("cli-test-short-alias-");
+  const outDir = await tempDir("cli-test-out-");
+  await writeFile(join(dir, "a.md"), "# A\n");
+  await writeFile(join(dir, "b.md"), "# B\n");
+  await writeFile(join(dir, "a.css"), ".page { color: red; }", "utf-8");
+  await writeFile(join(dir, "b.css"), ".page { color: blue; }", "utf-8");
+
+  await run(["-i", dir, "-o", outDir, "-m", "b.md", "-s", "b.css"]);
+
+  const html = await readFile(join(outDir, "b.html"), "utf-8");
+  expect(html).toContain("B");
+  expect(html).toContain("<style>.page { color: blue; }</style>");
+});
+
+it("render subcommand, called explicitly by name, behaves like the default", async () => {
+  const dir = await tempDir("cli-test-explicit-render-");
+  const outDir = await tempDir("cli-test-out-");
+  await writeFile(join(dir, "resume.md"), "# Jane Doe\n");
+  await writeFile(join(dir, "styles.css"), "", "utf-8");
+
+  await run(["render", "-i", dir, "-o", outDir]);
+
+  const html = await readFile(join(outDir, "resume.html"), "utf-8");
+  expect(html).toContain("Jane Doe");
+});
+
+it("run rejects an unrecognized leading command", async () => {
+  const dir = await tempDir("cli-test-unknown-command-");
+  await expect(run(["foo", "-i", dir])).rejects.toThrow("Unknown command");
 });
 
 it("run -w re-renders when the markdown file changes", async () => {

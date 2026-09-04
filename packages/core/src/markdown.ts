@@ -15,7 +15,7 @@ import {
   pairPlugin,
   regionsPlugin,
   stackPlugin,
-} from "./rules";
+} from "./rules/index.ts";
 import type { FrontmatterData, RenderResult } from "./types.ts";
 import { validateDocument } from "./validation.ts";
 

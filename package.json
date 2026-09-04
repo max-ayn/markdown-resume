@@ -10,7 +10,7 @@
   "license": "GPL-3.0",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "cli": "tsx packages/cli/src/cli.ts",
+    "cli": "tsx packages/cli/src/cli-entry.ts",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "test": "pnpm -r --if-present run test",

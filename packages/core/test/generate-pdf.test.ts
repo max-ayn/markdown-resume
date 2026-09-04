@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, it } from "vitest";
-import { HtmlToPdfGenerator } from "./generate-pdf.ts";
+import { HtmlToPdfGenerator } from "../src/generate-pdf.ts";
 
 async function withTempDir(fn: (dir: string) => Promise<void>) {
   const dir = await mkdtemp(join(tmpdir(), "markdown-resume-"));

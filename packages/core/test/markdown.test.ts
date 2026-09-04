@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { renderMarkdown } from "./markdown.ts";
+import { renderMarkdown } from "../src/markdown.ts";
 
 it("renders fields, containers, and headings", () => {
   const { html, issues } = renderMarkdown(`---

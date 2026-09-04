@@ -4,13 +4,14 @@
   "private": true,
   "license": "GPL-3.0",
   "type": "module",
-  "main": "./src/cli.ts",
+  "main": "./src/index.ts",
   "scripts": {
-    "start": "tsx ./src/cli.ts",
-    "test": "vitest run",
-    "test:types": "tsc --noEmit"
+    "dev": "node ./src/cli-entry.ts",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@markdown-resume/core": "workspace:*"
+    "@markdown-resume/core": "workspace:*",
+    "citty": "^0.2.2",
+    "consola": "^3.4.2"
   }
 }

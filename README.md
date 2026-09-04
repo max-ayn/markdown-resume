@@ -111,7 +111,6 @@ These currently print `<command> is not implemented yet.` and exit 1.
 
 ```bash
 pnpm test          # run all package tests (vitest)
-pnpm test:types    # type-check all packages (tsc)
 pnpm lint          # check formatting/lint rules (biome)
 pnpm lint:fix      # same, applying safe fixes
 ```
